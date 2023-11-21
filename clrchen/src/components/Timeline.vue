@@ -53,13 +53,14 @@
 </template>
 
 <script setup lang="ts">
-
 import * as d3 from "d3"
 import * as vue from "vue"
 import * as topojson from "topojson"
 import { nest } from 'd3-collection';
 import scroller from "../scroller"
-import { states, provinces } from "./constants"
+import { states, provinces, occurence } from "./constants"
+import { Legend, Swatches } from "d3-color-legend"
+import { map } from "d3";
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -79,70 +80,135 @@ function groupBy(objectArray, property) {
     if (!acc[key]) {
       acc[key] = []
     }
-    console.log(acc);
+    // console.log(acc);
     acc[key].push(obj)
     return acc
   }, {})
 }
-
+// for geo map
 function filterDataByState(data) {
   let states = groupBy(data, "state");
   let formattedData = [];
   Object.keys(states).forEach(d => {
     let num = states[d].length;
-    
     let processedObj = {
       name: d,
       value: num,
     }
-    
     formattedData.push(processedObj);
   });
-
   return formattedData;
 }
-
+// for geo map
 function getOcc(data) {
-  const dataByState = filterDataByState(data);
-  const values = dataByState.map(item => item.value);
-  const sortedValues = values.sort((a, b) => a - b);
-  // Calculate percentiles and maximum
-  const min = d3.min(sortedValues)
-  const Q1 = d3.quantile(sortedValues, 0.25);
-  const median = d3.median(sortedValues);
-  const Q3 = d3.quantile(sortedValues, 0.75);
-  const max = d3.max(sortedValues);
+    const dataByState = filterDataByState(data);
+    const values = dataByState.map(item => item.value);
+    const sortedValues = values.sort((a, b) => a - b);
+    // Calculate percentiles and maximum
+    const min = d3.min(sortedValues)
+    const Q1 = d3.quantile(sortedValues, 0.25);
+    const median = d3.median(sortedValues);
+    const Q3 = d3.quantile(sortedValues, 0.75);
+    const max = d3.max(sortedValues);
+    // Define ranges based on these percentiles
+    const rangeLow = [min, Q1];
+    const rangeModerate = [Q1, median];
+    const rangeHigh = [median, Q3];
+    const rangeVeryHigh = [Q3, max + 1];
+    
+    const occurenceCategories = [
+        { range: rangeLow, category: "Low" },
+        { range: rangeModerate, category: "Moderate" },
+        { range: rangeHigh, category: "High" },
+        { range: rangeVeryHigh, category: "Very High" },
+    ];
+
+    let formattedData = [];
+    Object.keys(dataByState).forEach(d => {
+        let data = dataByState[d]
+        const category = occurenceCategories.find((cat) => data.value >= cat.range[0] && data.value < cat.range[1]);
+        const cat_occ = category ? category.category : "Unknown";
+        let processedObj = {
+        name: data.name,
+        value: data.value,
+        occ_cat: cat_occ
+        }
+        
+        formattedData.push(processedObj);
+    });
+
+    return formattedData;
+}
+// for heat map
+function getHeatMapData(data) {
+    const years = [...new Set(data.map(item => item.year))]
+    const nameToOccCatMap = getOcc(data).reduce((acc, item) => {
+        acc[item.name] = item.occ_cat;
+        return acc;
+    }, {});
+    // console.log(nameToOccCatMap)
+    const countByYearCategory = {};
+
+    data.forEach((event) => {
+        const { state, year } = event;
+        const category = nameToOccCatMap[state];
+        
+        // Initialize count for the year if not present
+        countByYearCategory[category] = countByYearCategory[category] || {};
+        
+        // Initialize count for the category if not present
+        countByYearCategory[category][year] = (countByYearCategory[category][year] || 0) + 1;
+    });
   
-  // Now, you can define ranges based on these percentiles
-  const rangeLow = [min, Q1];
-  const rangeModerate = [Q1, median];
-  const rangeHigh = [median, Q3];
-  const rangeVeryHigh = [Q3, max+1];
-  
-  
-  const occurenceCategories = [
-            { range: rangeLow, category: "Low" },
-            { range: rangeModerate, category: "Moderate" },
-            { range: rangeHigh, category: "High" },
-            { range: rangeVeryHigh, category: "Very High" },
-      ];
-  let formattedData = [];
-  Object.keys(dataByState).forEach(d => {
-    let data = dataByState[d]
-    const category = occurenceCategories.find((cat) => data.value >= cat.range[0] && data.value < cat.range[1]);
-    const cat_occ = category ? category.category : "Unknown";
-    let processedObj = {
-      name: data.name,
-      value: data.value,
-      occ_cat: cat_occ
+    // console.log(countByYearCategory)
+    years.forEach((year) => {
+        occurence.forEach((category) => {
+        countByYearCategory[category][year] = countByYearCategory[category][year] || 0;
+        });
+    });
+    let rearrangedObject = {};
+    occurence.forEach(key => {
+        rearrangedObject[key] = countByYearCategory[key];
+    });
+    const result = Object.keys(rearrangedObject).flatMap(category => {
+        const values = Object.values(rearrangedObject[category]);
+        return values.map(value => ({ cat: category, value: value.toString() }));
+    });
+    // console.log('xxxx', result);
+    const numRows = 4;
+    const numColumns = 25;
+
+    // Create a 2D array
+    let twoDArray = [];
+
+    // Iterate over rows
+    for (let i = 0; i < numRows; i++) {
+    // Extract a portion of the 1D array for each row
+    let row = result.slice(i * numColumns, (i + 1) * numColumns);
+    
+    // Push the row to the 2D array
+    twoDArray.push(row);
     }
-    
-    formattedData.push(processedObj);
-  });
 
-  return formattedData;
-
+    // console.log(twoDArray);
     
+    
+    const values = occurence.map(category =>
+        years.map(year => countByYearCategory[category][year] || 0)
+    );
+    const values1DArray = Object.values(countByYearCategory).flatMap(yearCounts =>
+        Object.values(yearCounts)
+    );
+    
+    // console.log(values1DArray);
+
+    return {
+        twoDArray,
+        values1DArray,
+        occurence,
+        years,
+        year: 1999
+    };
 }
 
 let data = null; // Initialize data variable
@@ -159,11 +225,17 @@ d3.tsv('../../data/words.tsv')
   });
   
 let shootings = null;
+let heatmaps = null;
+let heatmaps_len = 0;
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
     // Assign loaded data to the variable
     shootings = getOcc(loadedData);
+    heatmaps = getHeatMapData(loadedData)
+    heatmaps_len = heatmaps.occurence.length;
+    console.log('xxxx', heatmaps, heatmaps_len)
     display(shootings)
+    display(heatmaps)
   })
   .catch(function(error) {
     // Handle error if data loading fails
@@ -332,6 +404,16 @@ function scrollVis(){
      *  element for each filler word type.
      * @param histData - binned histogram data
      */
+    let count_g = null;
+    let map_g = null;
+    // for geomap
+    const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
+    const color_cat = d3.scaleOrdinal(d3.schemePastel1)
+    const color_gradient = d3.scaleOrdinal(d3.schemeGreys[4]).domain(["Low", "Moderate", "High", "Very High"])
+    // for heatmap
+    const color_event = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps.values1DArray)])
+    const color_occurence = d3.scaleOrdinal(d3.schemeGreys[4]).domain(["Low", "Moderate", "High", "Very High"])
+
     var setupVis = function (wordData, fillerCounts, histData) {
         // axis
         g.append('g')
@@ -340,659 +422,728 @@ function scrollVis(){
         .call(xAxisBar);
         g.select('.x.axis').style('opacity', 0);
 
-
-    const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
-    const color_cat = d3.scaleOrdinal(d3.schemePastel1)
-    const color_gradient = d3.scaleOrdinal(d3.schemeGreys[4])
-                             .domain(["Low", "Moderate", "High", "Very High"])
-    let path = d3.geoPath()
-    
-    if (us) {
-        g.append("g")
-        .attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom)
-        .selectAll("path")
-        .data(topojson.feature(us, us.objects.states).features)
-        .enter().append("path")
-        .attr("class", "county")
-        .attr("d", path)
-        .attr("stroke", "black")
-        .attr("fill",(d) => { 
-            if(valuemap.get(d.properties.name)) {
-                return color_cat(valuemap.get(d.properties.name)) 
-            } else {
-                return "white"};
+        // draw the map
+        if (us) {
+            let path = d3.geoPath()
+            map_g = svg.append("g")
+            // g.append("g")
+            // .attr('class', 'title openvis-title')
+            // .attr("viewBox", [0, 0, width - margin.left - margin.right, height - margin.bottom - margin.top])
+            .attr("width", width - margin.left - margin.right)
+            .attr("height", height - margin.top - margin.bottom)
+            .attr("viewBox", `0 0 ${width - margin.left - margin.right} ${height - margin.top - margin.bottom}`)
+            .selectAll("path")
+            .data(topojson.feature(us, us.objects.states).features)
+            .enter().append("path")
+            .attr("class", "county")
+            .attr("d", path)
+            .attr("stroke", "black")
+            .attr("fill",(d) => { 
+                if (valuemap.get(d.properties.name)) {
+                    return color_cat(valuemap.get(d.properties.name)) 
+                } else {
+                    return "white"
+                };
             })
-        .transition()
-        .delay(200)
-        .duration(5000)
-        .attr("fill",(d) => {
-            if(valuemap.get(d.properties.name)) {
-                return color_gradient(valuemap.get(d.properties.name)) 
-            } else {
-                return "white"};
-            })
-        .transition()
-        .duration(5000)
-        .attr("fill",(d)=>{
-            if(d.properties.name == "Colorado"){
-                    return ("#773737");
-            }
-            else{
-                    if(valuemap.get(d.properties.name)){
-                            return color_gradient(valuemap.get(d.properties.name)) 
-                    }
-                    else{return "white"};
-            }
-        })
-        // Adding text labels
 
-    svg.append("g")
-        .selectAll("text")
-        .data(topojson.feature(us, us.objects.states).features)
-        .enter().append("text")
-        .text((d) => { if(valuemap.get(d.properties.name)){
+            // Adding text labels
+            count_g = svg.append("g")
+            .selectAll("text")
+            .data(topojson.feature(us, us.objects.states).features)
+            .enter().append("text")
+            .text((d) => { 
+                if (valuemap.get(d.properties.name)) {
                     return convertRegion(d.properties.name)
+                } else {
+                    return ""};
                 }
-                else{return ""};}) // Set the label to the state name
-        .attr("x", (d) => path.centroid(d)[0]) // X-coordinate of the label
-        .attr("y", (d) => path.centroid(d)[1]) // Y-coordinate of the label
-        .attr("text-anchor", "middle") // Center the text on the centroid
-        .attr("dy", "0.4em") // Adjust vertical position
-        .style("font-size", "10px") // Set the font size
-        .style("fill", "black"); // Set the text color
+            ) // Set the label to the state name
+            .attr('class', 'title openvis-title')
+            .attr("x", (d) => path.centroid(d)[0]) // X-coordinate of the label
+            .attr("y", (d) => path.centroid(d)[1]) // Y-coordinate of the label
+            .attr("text-anchor", "middle") // Center the text on the centroid
+            .attr("dy", "0.4em") // Adjust vertical position
+            .style("font-size", "10px") // Set the font size
+            .style("fill", "black"); // Set the text color
+        }
+
+        const x = d3.scaleLinear()
+        .domain([d3.min(heatmaps.years), d3.max(heatmaps.years) + 1])
+        .range([0, width])
+
+        const y = d3.scaleBand()
+        .domain(heatmaps.occurence)
+        .rangeRound([0, height])
+
+        console.log('xxxx', d3.min(heatmaps.years))
+
+
+        /*
+        // count openvis title
+        g.append('text')
+        .attr('class', 'title openvis-title')
+        .attr('x', width / 2)
+        .attr('y', height / 3)
+        .text('School Shootings')
+        .attr('font-size', '50px')
+        .attr('text-anchor', 'middle');
+        g.append('text')
+        .attr('class', 'sub-title openvis-title')
+        .attr('x', width / 2)
+        .attr('y', (height / 3) + (height / 5))
+        .text('Influenced by Columbine Shooting Event in the US');
+        */
+
+       if (map_g) {
+        map_g.attr('opacity', 0);
+       }
+        
+
+        /*
+        // count filler word count title
+        g.append('text')
+        .attr('class', 'title count-title highlight')
+        .attr('x', width / 2)
+        .attr('y', height / 3)
+        .text('180');
+
+        g.append('text')
+        .attr('class', 'sub-title count-title')
+        .attr('x', width / 2)
+        .attr('y', (height / 3) + (height / 5))
+        .text('Filler Words');
+        */
+
+        g.selectAll('.count-title')
+        .attr('opacity', 0);
+
+        // square grid
+        // @v4 Using .merge here to ensure
+        // new and old data have same attrs applied
+        var squares = g.selectAll('.square').data(wordData, function (d) { return d.word; });
+        var squaresE = squares.enter()
+        .append('rect')
+        .classed('square', true);
+        squares = squares.merge(squaresE)
+        .attr('width', squareSize)
+        .attr('height', squareSize)
+        .attr('fill', '#fff')
+        .classed('fill-square', function (d) { return d.filler; })
+        .attr('x', function (d) { return d.x;})
+        .attr('y', function (d) { return d.y;})
+        .attr('opacity', 0);
+
+        // barchart
+        // @v4 Using .merge here to ensure
+        // new and old data have same attrs applied
+        var bars = g.selectAll('.bar').data(fillerCounts);
+        var barsE = bars.enter()
+        .append('rect')
+        .attr('class', 'bar');
+        bars = bars.merge(barsE)
+        .attr('x', 0)
+        .attr('y', function (d, i) { return yBarScale(i);})
+        .attr('fill', function (d, i) { return barColors[i]; })
+        .attr('width', 0)
+        .attr('height', yBarScale.bandwidth());
+
+        var barText = g.selectAll('.bar-text').data(fillerCounts);
+        barText.enter()
+        .append('text')
+        .attr('class', 'bar-text')
+        .text(function (d) { return d.key + '…'; })
+        .attr('x', 0)
+        .attr('dx', 15)
+        .attr('y', function (d, i) { return yBarScale(i);})
+        .attr('dy', yBarScale.bandwidth() / 1.2)
+        .style('font-size', '110px')
+        .attr('fill', 'white')
+        .attr('opacity', 0);
+
+        // histogram
+        // @v4 Using .merge here to ensure
+        // new and old data have same attrs applied
+        var hist = g.selectAll('.hist').data(histData);
+        var histE = hist.enter().append('rect')
+        .attr('class', 'hist');
+        hist = hist.merge(histE).attr('x', function (d) { return xHistScale(d.x0); })
+        .attr('y', height)
+        .attr('height', 0)
+        .attr('width', xHistScale(histData[0].x1) - xHistScale(histData[0].x0) - 1)
+        .attr('fill', barColors[0])
+        .attr('opacity', 0);
+
+        // cough title
+        g.append('text')
+        .attr('class', 'sub-title cough cough-title')
+        .attr('x', width / 2)
+        .attr('y', 60)
+        .text('cough')
+        .attr('opacity', 0);
+
+        // arrowhead from
+        // http://logogin.blogspot.com/2013/02/d3js-arrowhead-markers.html
+        svg.append('defs').append('marker')
+        .attr('id', 'arrowhead')
+        .attr('refY', 2)
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 4)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M 0,0 V 4 L6,2 Z');
+
+        g.append('path')
+        .attr('class', 'cough cough-arrow')
+        .attr('marker-end', 'url(#arrowhead)')
+        .attr('d', function () {
+            var line = 'M ' + ((width / 2) - 10) + ' ' + 80;
+            line += ' l 0 ' + 230;
+            return line;
+        })
+        .attr('opacity', 0);
+    };
+
+    /**
+     * setupSections - each section is activated
+     * by a separate function. Here we associate
+     * these functions to the sections based on
+     * the section's index.
+     *
+     */
+    var setupSections = function () {
+        // activateFunctions are called each
+        // time the active section changes
+        activateFunctions[0] = showTitle;
+        activateFunctions[1] = showFillerTitle;
+        activateFunctions[2] = showGrid;
+        activateFunctions[3] = highlightGrid;
+        activateFunctions[4] = showBar;
+        activateFunctions[5] = showHistPart;
+        activateFunctions[6] = showHistAll;
+        activateFunctions[7] = showCough;
+        activateFunctions[8] = showHistAll;
+
+        // updateFunctions are called while
+        // in a particular section to update
+        // the scroll progress in that section.
+        // Most sections do not need to be updated
+        // for all scrolling and so are set to
+        // no-op functions.
+        for (var i = 0; i < 9; i++) {
+        updateFunctions[i] = function () {};
+        }
+        updateFunctions[7] = updateCough;
+    };
+
+    /**
+     * ACTIVATE FUNCTIONS
+     *
+     * These will be called their
+     * section is scrolled to.
+     *
+     * General pattern is to ensure
+     * all content for the current section
+     * is transitioned in, while hiding
+     * the content for the previous section
+     * as well as the next section (as the
+     * user may be scrolling up or down).
+     *
+     */
+
+    /**
+     * showTitle - initial title
+     *
+     * hides: count title
+     * (no previous step to hide)
+     * shows: intro title
+     *
+     */
+    function showTitle() {
+        g.selectAll('.count-title')
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
+
+        // g.selectAll('.openvis-title')
+        if (map_g) {
+            map_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0)
+            .style("fill",(d) => { 
+                if (valuemap.get(d.properties.name)) {
+                    return color_cat(valuemap.get(d.properties.name)) 
+                } else {
+                    return "white"
+                };
+            })
+        }
+
+        if (count_g) {
+            count_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0)
+            console.log(count_g)
+        } else {
+            console.log('no count_g')
+        }
+
+
     }
 
-    // count openvis title
-    g.append('text')
-    .attr('class', 'title openvis-title')
-    .attr('x', width / 2)
-    .attr('y', height / 3)
-    .text('School Shootings')
-    .attr('font-size', '50px')
-    .attr('text-anchor', 'middle');
+    /**
+     * showFillerTitle - filler counts
+     *
+     * hides: intro title
+     * hides: square grid
+     * shows: filler count title
+     *
+     */
+    function showFillerTitle() {
+        // g.selectAll('.openvis-title .county')
+        if (map_g) {
+            map_g
+            .transition()
+            .duration(1000)
+            // .attr('opacity', 0);
+            // .transition()
+            .style("fill",(d) => {
+                if(valuemap.get(d.properties.name)) {
+                    return color_gradient(valuemap.get(d.properties.name)) 
+                } else {
+                    return "white"
+                };
+            })
+            .transition()
+            .style("fill",(d) => {
+                if (d.properties.name == "Colorado") {
+                    return ("#773737");
+                } else {
+                    if(valuemap.get(d.properties.name)){
+                        return color_gradient(valuemap.get(d.properties.name)) 
+                    } else {
+                        return "white"
+                    };
+                }
+            })
+        }
 
-    g.append('text')
-    .attr('class', 'sub-title openvis-title')
-    .attr('x', width / 2)
-    .attr('y', (height / 3) + (height / 5))
-    .text('Influenced by Columbine Shooting Event in the US');
+        g.selectAll('.square')
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
 
-    g.selectAll('.openvis-title')
-    .attr('opacity', 0);
+        g.selectAll('.count-title')
+        .transition()
+        .duration(600)
+        .attr('opacity', 1.0);
 
-    // count filler word count title
-    g.append('text')
-    .attr('class', 'title count-title highlight')
-    .attr('x', width / 2)
-    .attr('y', height / 3)
-    .text('180');
 
-    g.append('text')
-    .attr('class', 'sub-title count-title')
-    .attr('x', width / 2)
-    .attr('y', (height / 3) + (height / 5))
-    .text('Filler Words');
-
-    g.selectAll('.count-title')
-    .attr('opacity', 0);
-
-    // square grid
-    // @v4 Using .merge here to ensure
-    // new and old data have same attrs applied
-    var squares = g.selectAll('.square').data(wordData, function (d) { return d.word; });
-    var squaresE = squares.enter()
-    .append('rect')
-    .classed('square', true);
-    squares = squares.merge(squaresE)
-    .attr('width', squareSize)
-    .attr('height', squareSize)
-    .attr('fill', '#fff')
-    .classed('fill-square', function (d) { return d.filler; })
-    .attr('x', function (d) { return d.x;})
-    .attr('y', function (d) { return d.y;})
-    .attr('opacity', 0);
-
-    // barchart
-    // @v4 Using .merge here to ensure
-    // new and old data have same attrs applied
-    var bars = g.selectAll('.bar').data(fillerCounts);
-    var barsE = bars.enter()
-    .append('rect')
-    .attr('class', 'bar');
-    bars = bars.merge(barsE)
-    .attr('x', 0)
-    .attr('y', function (d, i) { return yBarScale(i);})
-    .attr('fill', function (d, i) { return barColors[i]; })
-    .attr('width', 0)
-    .attr('height', yBarScale.bandwidth());
-
-    var barText = g.selectAll('.bar-text').data(fillerCounts);
-    barText.enter()
-    .append('text')
-    .attr('class', 'bar-text')
-    .text(function (d) { return d.key + '…'; })
-    .attr('x', 0)
-    .attr('dx', 15)
-    .attr('y', function (d, i) { return yBarScale(i);})
-    .attr('dy', yBarScale.bandwidth() / 1.2)
-    .style('font-size', '110px')
-    .attr('fill', 'white')
-    .attr('opacity', 0);
-
-    // histogram
-    // @v4 Using .merge here to ensure
-    // new and old data have same attrs applied
-    var hist = g.selectAll('.hist').data(histData);
-    var histE = hist.enter().append('rect')
-    .attr('class', 'hist');
-    hist = hist.merge(histE).attr('x', function (d) { return xHistScale(d.x0); })
-    .attr('y', height)
-    .attr('height', 0)
-    .attr('width', xHistScale(histData[0].x1) - xHistScale(histData[0].x0) - 1)
-    .attr('fill', barColors[0])
-    .attr('opacity', 0);
-
-    // cough title
-    g.append('text')
-    .attr('class', 'sub-title cough cough-title')
-    .attr('x', width / 2)
-    .attr('y', 60)
-    .text('cough')
-    .attr('opacity', 0);
-
-    // arrowhead from
-    // http://logogin.blogspot.com/2013/02/d3js-arrowhead-markers.html
-    svg.append('defs').append('marker')
-    .attr('id', 'arrowhead')
-    .attr('refY', 2)
-    .attr('markerWidth', 6)
-    .attr('markerHeight', 4)
-    .attr('orient', 'auto')
-    .append('path')
-    .attr('d', 'M 0,0 V 4 L6,2 Z');
-
-    g.append('path')
-    .attr('class', 'cough cough-arrow')
-    .attr('marker-end', 'url(#arrowhead)')
-    .attr('d', function () {
-        var line = 'M ' + ((width / 2) - 10) + ' ' + 80;
-        line += ' l 0 ' + 230;
-        return line;
-    })
-    .attr('opacity', 0);
-};
-
-/**
- * setupSections - each section is activated
- * by a separate function. Here we associate
- * these functions to the sections based on
- * the section's index.
- *
- */
-var setupSections = function () {
-    // activateFunctions are called each
-    // time the active section changes
-    activateFunctions[0] = showTitle;
-    activateFunctions[1] = showFillerTitle;
-    activateFunctions[2] = showGrid;
-    activateFunctions[3] = highlightGrid;
-    activateFunctions[4] = showBar;
-    activateFunctions[5] = showHistPart;
-    activateFunctions[6] = showHistAll;
-    activateFunctions[7] = showCough;
-    activateFunctions[8] = showHistAll;
-
-    // updateFunctions are called while
-    // in a particular section to update
-    // the scroll progress in that section.
-    // Most sections do not need to be updated
-    // for all scrolling and so are set to
-    // no-op functions.
-    for (var i = 0; i < 9; i++) {
-    updateFunctions[i] = function () {};
+        if (count_g) {
+            count_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 1.0);
+        } else {
+            console.log('no count_g')
+        }
     }
-    updateFunctions[7] = updateCough;
-};
 
-/**
- * ACTIVATE FUNCTIONS
- *
- * These will be called their
- * section is scrolled to.
- *
- * General pattern is to ensure
- * all content for the current section
- * is transitioned in, while hiding
- * the content for the previous section
- * as well as the next section (as the
- * user may be scrolling up or down).
- *
- */
+    /**
+     * showGrid - square grid
+     *
+     * hides: filler count title
+     * hides: filler highlight in grid
+     * shows: square grid
+     *
+     */
+    function showGrid() {
+        if (count_g) {
+            count_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 0)
+            console.log(count_g)
+        } else {
+            console.log('no count_g')
+        }
 
-/**
- * showTitle - initial title
- *
- * hides: count title
- * (no previous step to hide)
- * shows: intro title
- *
- */
-function showTitle() {
-    g.selectAll('.count-title')
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
+        // g.selectAll('.openvis-title .county')
+        map_g
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);    
 
-    g.selectAll('.openvis-title')
-    .transition()
-    .duration(600)
-    .attr('opacity', 1.0);
-}
+        g.selectAll('.count-title')
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
 
-/**
- * showFillerTitle - filler counts
- *
- * hides: intro title
- * hides: square grid
- * shows: filler count title
- *
- */
-function showFillerTitle() {
-    g.selectAll('.openvis-title')
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
+        g.selectAll('.square')
+        .transition()
+        .duration(600)
+        .delay(function (d) {
+            return 5 * d.row;
+        })
+        .attr('opacity', 1.0)
+        .attr('fill', '#ddd');
+    }
 
-    g.selectAll('.square')
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
+    /**
+     * highlightGrid - show fillers in grid
+     *
+     * hides: barchart, text and axis
+     * shows: square grid and highlighted
+     *  filler words. also ensures squares
+     *  are moved back to their place in the grid
+     */
+    function highlightGrid() {
+        hideAxis();
+        g.selectAll('.bar')
+        .transition()
+        .duration(600)
+        .attr('width', 0);
 
-    g.selectAll('.count-title')
-    .transition()
-    .duration(600)
-    .attr('opacity', 1.0);
-}
-
-/**
- * showGrid - square grid
- *
- * hides: filler count title
- * hides: filler highlight in grid
- * shows: square grid
- *
- */
-function showGrid() {
-    g.selectAll('.count-title')
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
-
-    g.selectAll('.square')
-    .transition()
-    .duration(600)
-    .delay(function (d) {
-        return 5 * d.row;
-    })
-    .attr('opacity', 1.0)
-    .attr('fill', '#ddd');
-}
-
-/**
- * highlightGrid - show fillers in grid
- *
- * hides: barchart, text and axis
- * shows: square grid and highlighted
- *  filler words. also ensures squares
- *  are moved back to their place in the grid
- */
-function highlightGrid() {
-    hideAxis();
-    g.selectAll('.bar')
-    .transition()
-    .duration(600)
-    .attr('width', 0);
-
-    g.selectAll('.bar-text')
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
+        g.selectAll('.bar-text')
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
 
 
-    g.selectAll('.square')
-    .transition()
-    .duration(0)
-    .attr('opacity', 1.0)
-    .attr('fill', '#ddd');
+        g.selectAll('.square')
+        .transition()
+        .duration(0)
+        .attr('opacity', 1.0)
+        .attr('fill', '#ddd');
 
-    // use named transition to ensure
-    // move happens even if other
-    // transitions are interrupted.
-    g.selectAll('.fill-square')
-    .transition('move-fills')
-    .duration(800)
-    .attr('x', function (d) {
-        return d.x;
-    })
-    .attr('y', function (d) {
-        return d.y;
-    });
+        // use named transition to ensure
+        // move happens even if other
+        // transitions are interrupted.
+        g.selectAll('.fill-square')
+        .transition('move-fills')
+        .duration(800)
+        .attr('x', function (d) {
+            return d.x;
+        })
+        .attr('y', function (d) {
+            return d.y;
+        });
 
-    g.selectAll('.fill-square')
-    .transition()
-    .duration(800)
-    .attr('opacity', 1.0)
-    .attr('fill', function (d) { return d.filler ? '#008080' : '#ddd'; });
-}
+        g.selectAll('.fill-square')
+        .transition()
+        .duration(800)
+        .attr('opacity', 1.0)
+        .attr('fill', function (d) { return d.filler ? '#008080' : '#ddd'; });
+    }
 
-/**
- * showBar - barchart
- *
- * hides: square grid
- * hides: histogram
- * shows: barchart
- *
- */
-function showBar() {
-    // ensure bar axis is set
-    showAxis(xAxisBar);
+    /**
+     * showBar - barchart
+     *
+     * hides: square grid
+     * hides: histogram
+     * shows: barchart
+     *
+     */
+    function showBar() {
+        // ensure bar axis is set
+        showAxis(xAxisBar);
 
-    g.selectAll('.square')
-    .transition()
-    .duration(800)
-    .attr('opacity', 0);
+        g.selectAll('.square')
+        .transition()
+        .duration(800)
+        .attr('opacity', 0);
 
-    g.selectAll('.fill-square')
-    .transition()
-    .duration(800)
-    .attr('x', 0)
-    .attr('y', function (d, i) {
-        return yBarScale(i % 3) + yBarScale.bandwidth() / 2;
-    })
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
+        g.selectAll('.fill-square')
+        .transition()
+        .duration(800)
+        .attr('x', 0)
+        .attr('y', function (d, i) {
+            return yBarScale(i % 3) + yBarScale.bandwidth() / 2;
+        })
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
 
-    g.selectAll('.hist')
-    .transition()
-    .duration(600)
-    .attr('height', function () { return 0; })
-    .attr('y', function () { return height; })
-    .style('opacity', 0);
+        g.selectAll('.hist')
+        .transition()
+        .duration(600)
+        .attr('height', function () { return 0; })
+        .attr('y', function () { return height; })
+        .style('opacity', 0);
 
-    g.selectAll('.bar')
-    .transition()
-    .delay(function (d, i) { return 300 * (i + 1);})
-    .duration(600)
-    .attr('width', function (d) { return xBarScale(d.value); });
+        g.selectAll('.bar')
+        .transition()
+        .delay(function (d, i) { return 300 * (i + 1);})
+        .duration(600)
+        .attr('width', function (d) { return xBarScale(d.value); });
 
-    g.selectAll('.bar-text')
-    .transition()
-    .duration(600)
-    .delay(1200)
-    .attr('opacity', 1);
-}
+        g.selectAll('.bar-text')
+        .transition()
+        .duration(600)
+        .delay(1200)
+        .attr('opacity', 1);
+    }
 
-/**
- * showHistPart - shows the first part
- *  of the histogram of filler words
- *
- * hides: barchart
- * hides: last half of histogram
- * shows: first half of histogram
- *
- */
-function showHistPart() {
-    // switch the axis to histogram one
-    showAxis(xAxisHist);
+    /**
+     * showHistPart - shows the first part
+     *  of the histogram of filler words
+     *
+     * hides: barchart
+     * hides: last half of histogram
+     * shows: first half of histogram
+     *
+     */
+    function showHistPart() {
+        // switch the axis to histogram one
+        showAxis(xAxisHist);
 
-    g.selectAll('.bar-text')
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
+        g.selectAll('.bar-text')
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
 
-    g.selectAll('.bar')
-    .transition()
-    .duration(600)
-    .attr('width', 0);
+        g.selectAll('.bar')
+        .transition()
+        .duration(600)
+        .attr('width', 0);
 
-    // here we only show a bar if
-    // it is before the 15 minute mark
-    g.selectAll('.hist')
-    .transition()
-    .duration(600)
-    .attr('y', function (d) { return (d.x0 < 15) ? yHistScale(d.length) : height; })
-    .attr('height', function (d) { return (d.x0 < 15) ? height - yHistScale(d.length) : 0; })
-    .style('opacity', function (d) { return (d.x0 < 15) ? 1.0 : 1e-6; });
-}
+        // here we only show a bar if
+        // it is before the 15 minute mark
+        g.selectAll('.hist')
+        .transition()
+        .duration(600)
+        .attr('y', function (d) { return (d.x0 < 15) ? yHistScale(d.length) : height; })
+        .attr('height', function (d) { return (d.x0 < 15) ? height - yHistScale(d.length) : 0; })
+        .style('opacity', function (d) { return (d.x0 < 15) ? 1.0 : 1e-6; });
+    }
 
-/**
- * showHistAll - show all histogram
- *
- * hides: cough title and color
- * (previous step is also part of the
- *  histogram, so we don't have to hide
- *  that)
- * shows: all histogram bars
- *
- */
-function showHistAll() {
-    // ensure the axis to histogram one
-    showAxis(xAxisHist);
+    /**
+     * showHistAll - show all histogram
+     *
+     * hides: cough title and color
+     * (previous step is also part of the
+     *  histogram, so we don't have to hide
+     *  that)
+     * shows: all histogram bars
+     *
+     */
+    function showHistAll() {
+        // ensure the axis to histogram one
+        showAxis(xAxisHist);
 
-    g.selectAll('.cough')
-    .transition()
-    .duration(0)
-    .attr('opacity', 0);
+        g.selectAll('.cough')
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
 
-    // named transition to ensure
-    // color change is not clobbered
-    g.selectAll('.hist')
-    .transition('color')
-    .duration(500)
-    .style('fill', '#008080');
+        // named transition to ensure
+        // color change is not clobbered
+        g.selectAll('.hist')
+        .transition('color')
+        .duration(500)
+        .style('fill', '#008080');
 
-    g.selectAll('.hist')
-    .transition()
-    .duration(1200)
-    .attr('y', function (d) { return yHistScale(d.length); })
-    .attr('height', function (d) { return height - yHistScale(d.length); })
-    .style('opacity', 1.0);
-}
+        g.selectAll('.hist')
+        .transition()
+        .duration(1200)
+        .attr('y', function (d) { return yHistScale(d.length); })
+        .attr('height', function (d) { return height - yHistScale(d.length); })
+        .style('opacity', 1.0);
+    }
 
-/**
- * showCough
- *
- * hides: nothing
- * (previous and next sections are histograms
- *  so we don't have to hide much here)
- * shows: histogram
- *
- */
-function showCough() {
-    // ensure the axis to histogram one
-    showAxis(xAxisHist);
+    /**
+     * showCough
+     *
+     * hides: nothing
+     * (previous and next sections are histograms
+     *  so we don't have to hide much here)
+     * shows: histogram
+     *
+     */
+    function showCough() {
+        // ensure the axis to histogram one
+        showAxis(xAxisHist);
 
-    g.selectAll('.hist')
-    .transition()
-    .duration(600)
-    .attr('y', function (d) { return yHistScale(d.length); })
-    .attr('height', function (d) { return height - yHistScale(d.length); })
-    .style('opacity', 1.0);
-}
+        g.selectAll('.hist')
+        .transition()
+        .duration(600)
+        .attr('y', function (d) { return yHistScale(d.length); })
+        .attr('height', function (d) { return height - yHistScale(d.length); })
+        .style('opacity', 1.0);
+    }
 
-/**
- * showAxis - helper function to
- * display particular xAxis
- *
- * @param axis - the axis to show
- *  (xAxisHist or xAxisBar)
- */
-function showAxis(axis) {
-    g.select('.x.axis')
-    .call(axis)
-    .transition().duration(500)
-    .style('opacity', 1);
-}
+    /**
+     * showAxis - helper function to
+     * display particular xAxis
+     *
+     * @param axis - the axis to show
+     *  (xAxisHist or xAxisBar)
+     */
+    function showAxis(axis) {
+        g.select('.x.axis')
+        .call(axis)
+        .transition().duration(500)
+        .style('opacity', 1);
+    }
 
-/**
- * hideAxis - helper function
- * to hide the axis
- *
- */
-function hideAxis() {
-    g.select('.x.axis')
-    .transition().duration(500)
-    .style('opacity', 0);
-}
+    /**
+     * hideAxis - helper function
+     * to hide the axis
+     *
+     */
+    function hideAxis() {
+        g.select('.x.axis')
+        .transition().duration(500)
+        .style('opacity', 0);
+    }
 
-/**
- * UPDATE FUNCTIONS
- *
- * These will be called within a section
- * as the user scrolls through it.
- *
- * We use an immediate transition to
- * update visual elements based on
- * how far the user has scrolled
- *
- */
+    /**
+     * UPDATE FUNCTIONS
+     *
+     * These will be called within a section
+     * as the user scrolls through it.
+     *
+     * We use an immediate transition to
+     * update visual elements based on
+     * how far the user has scrolled
+     *
+     */
 
-/**
- * updateCough - increase/decrease
- * cough text and color
- *
- * @param progress - 0.0 - 1.0 -
- *  how far user has scrolled in section
- */
-function updateCough(progress) {
-    g.selectAll('.cough')
-    .transition()
-    .duration(0)
-    .attr('opacity', progress);
+    /**
+     * updateCough - increase/decrease
+     * cough text and color
+     *
+     * @param progress - 0.0 - 1.0 -
+     *  how far user has scrolled in section
+     */
+    function updateCough(progress) {
+        g.selectAll('.cough')
+        .transition()
+        .duration(0)
+        .attr('opacity', progress);
 
-    g.selectAll('.hist')
-    .transition('cough')
-    .duration(0)
-    .style('fill', function (d) {
-        return (d.x0 >= 14) ? coughColorScale(progress) : '#008080';
-    });
-}
+        g.selectAll('.hist')
+        .transition('cough')
+        .duration(0)
+        .style('fill', function (d) {
+            return (d.x0 >= 14) ? coughColorScale(progress) : '#008080';
+        });
+    }
 
-/**
- * DATA FUNCTIONS
- *
- * Used to coerce the data into the
- * formats we need to visualize
- *
- */
+    /**
+     * DATA FUNCTIONS
+     *
+     * Used to coerce the data into the
+     * formats we need to visualize
+     *
+     */
 
-/**
- * getWords - maps raw data to
- * array of data objects. There is
- * one data object for each word in the speach
- * data.
- *
- * This function converts some attributes into
- * numbers and adds attributes used in the visualization
- *
- * @param rawData - data read in from file
- */
-function getWords(rawData) {
-    return rawData.map(function (d, i) {
-    // is this word a filler word?
-    d.filler = (d.filler === '1') ? true : false;
-    // time in seconds word was spoken
-    d.time = +d.time;
-    // time in minutes word was spoken
-    d.min = Math.floor(d.time / 60);
+    /**
+     * getWords - maps raw data to
+     * array of data objects. There is
+     * one data object for each word in the speach
+     * data.
+     *
+     * This function converts some attributes into
+     * numbers and adds attributes used in the visualization
+     *
+     * @param rawData - data read in from file
+     */
+    function getWords(rawData) {
+        return rawData.map(function (d, i) {
+        // is this word a filler word?
+        d.filler = (d.filler === '1') ? true : false;
+        // time in seconds word was spoken
+        d.time = +d.time;
+        // time in minutes word was spoken
+        d.min = Math.floor(d.time / 60);
 
-    // positioning for square visual
-    // stored here to make it easier
-    // to keep track of.
-    d.col = i % numPerRow;
-    d.x = d.col * (squareSize + squarePad);
-    d.row = Math.floor(i / numPerRow);
-    d.y = d.row * (squareSize + squarePad);
-    return d;
-    });
-}
+        // positioning for square visual
+        // stored here to make it easier
+        // to keep track of.
+        d.col = i % numPerRow;
+        d.x = d.col * (squareSize + squarePad);
+        d.row = Math.floor(i / numPerRow);
+        d.y = d.row * (squareSize + squarePad);
+        return d;
+        });
+    }
 
-/**
- * getFillerWords - returns array of
- * only filler words
- *
- * @param data - word data from getWords
- */
-function getFillerWords(data) {
-    return data.filter(function (d) {return d.filler; });
-}
+    /**
+     * getFillerWords - returns array of
+     * only filler words
+     *
+     * @param data - word data from getWords
+     */
+    function getFillerWords(data) {
+        return data.filter(function (d) {return d.filler; });
+    }
 
-/**
- * getHistogram - use d3's histogram layout
- * to generate histogram bins for our word data
- *
- * @param data - word data. we use filler words
- *  from getFillerWords
- */
-function getHistogram(data) {
-    // only get words from the first 30 minutes
-    var thirtyMins = data.filter(function (d) { return d.min < 30; });
-    // bin data into 2 minutes chuncks
-    // from 0 - 31 minutes
-    // @v4 The d3.histogram() produces a significantly different
-    // data structure then the old d3.layout.histogram().
-    // Take a look at this block:
-    // https://bl.ocks.org/mbostock/3048450
-    // to inform how you use it. Its different!
-    return d3.histogram()
-    .thresholds(xHistScale.ticks(10))
-    .value(function (d) { return d.min; })(thirtyMins);
-}
+    /**
+     * getHistogram - use d3's histogram layout
+     * to generate histogram bins for our word data
+     *
+     * @param data - word data. we use filler words
+     *  from getFillerWords
+     */
+    function getHistogram(data) {
+        // only get words from the first 30 minutes
+        var thirtyMins = data.filter(function (d) { return d.min < 30; });
+        // bin data into 2 minutes chuncks
+        // from 0 - 31 minutes
+        // @v4 The d3.histogram() produces a significantly different
+        // data structure then the old d3.layout.histogram().
+        // Take a look at this block:
+        // https://bl.ocks.org/mbostock/3048450
+        // to inform how you use it. Its different!
+        return d3.histogram()
+        .thresholds(xHistScale.ticks(10))
+        .value(function (d) { return d.min; })(thirtyMins);
+    }
 
-/**
-* groupByWord - group words together
-* using nest. Used to get counts for
-* barcharts.
-*
-* @param words
-*/
-function groupByWord(words) {
-    return nest()
-    .key(function (d) { return d.word; })
-    .rollup(function (v) { return v.length; })
-    .entries(words)
-    .sort(function (a, b) {return b.value - a.value;});
-}
+    /**
+    * groupByWord - group words together
+    * using nest. Used to get counts for
+    * barcharts.
+    *
+    * @param words
+    */
+    function groupByWord(words) {
+        return nest()
+        .key(function (d) { return d.word; })
+        .rollup(function (v) { return v.length; })
+        .entries(words)
+        .sort(function (a, b) {return b.value - a.value;});
+    }
 
-/**
-* activate -
-*
-* @param index - index of the activated section
-*/
-chart.activate = function (index) {
-    activeIndex = index;
-    var sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
-    var scrolledSections = d3.range(lastIndex + sign, activeIndex + sign, sign);
-    scrolledSections.forEach(function (i) {
-    activateFunctions[i]();
-    });
-    lastIndex = activeIndex;
-};
+    /**
+    * activate -
+    *
+    * @param index - index of the activated section
+    */
+    chart.activate = function (index) {
+        activeIndex = index;
+        var sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
+        var scrolledSections = d3.range(lastIndex + sign, activeIndex + sign, sign);
+        scrolledSections.forEach(function (i) {
+        activateFunctions[i]();
+        });
+        lastIndex = activeIndex;
+    };
 
-/**
-* update
-*
-* @param index
-* @param progress
-*/
-chart.update = function (index, progress) {
-    updateFunctions[index](progress);
-};
+    /**
+    * update
+    *
+    * @param index
+    * @param progress
+    */
+    chart.update = function (index, progress) {
+        updateFunctions[index](progress);
+    };
 
-// return chart function
-return chart;
+    // return chart function
+    return chart;
 }
 function display(data) {
     // create a new plot and

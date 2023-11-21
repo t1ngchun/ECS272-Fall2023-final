@@ -76,3 +76,5 @@ export const provinces = [
   ["Saskatchewan", "SK"],
   ["Yukon", "YT"],
 ];
+
+export const occurence = ["Low", "Moderate", "High", "Very High"];
