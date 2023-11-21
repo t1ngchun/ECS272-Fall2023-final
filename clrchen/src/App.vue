@@ -9,18 +9,14 @@ export default {
   },
   components: {
     Timeline,
-    
   },
-  methods: {
-    
-  }
 }
 </script>
 
 <!--This is using the grid component from Vuetify to do layout design-->
 <template>
   <v-container id="main-container" class="d-flex flex-nowrap" fluid>
-    <Timeline/>
+    <Timeline />
   </v-container>
 </template>
 
