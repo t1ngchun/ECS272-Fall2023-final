@@ -61,6 +61,7 @@ import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { Legend, Swatches } from "d3-color-legend"
 import { map } from "d3";
+import { filterShootingType, filterShooterDeceased, filterWeaponSource } from "./utils"
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -73,7 +74,6 @@ function convertRegion(input)  {
     
     
 }
-
 function groupBy(objectArray, property) {
   return objectArray.reduce(function (acc, obj) {
     let key = obj[property]
@@ -174,7 +174,6 @@ function getHeatMapData(data) {
         const values = Object.values(rearrangedObject[category]);
         return values.map(value => ({ cat: category, value: value.toString() }));
     });
-    // console.log('xxxx', result);
     const numRows = 4;
     const numColumns = 25;
 
@@ -210,6 +209,57 @@ function getHeatMapData(data) {
         year: 1999
     };
 }
+// for pie chart
+function filteredPieChartData(data) {
+  let formattedData = [];
+  Object.keys(data).forEach(d => {
+    let value = data[d];
+    let processedObj = {
+      year: value.year,
+      state: value.state,
+      killed: value.killed,
+      injured: value.injured,
+      casualties: value.casualties,
+      age_shooter: value.age_shooter1,
+      shooting_type: filterShootingType(value.shooting_type),
+      shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
+      weapon_source: filterWeaponSource(value.weapon_source),
+    }
+    if (processedObj.year) {
+      formattedData.push(processedObj);
+    }
+  });
+  return formattedData;
+}
+function getDeceasedData(data) {
+  let alive = 0
+  let suicide = 0
+  let police = 0
+  let others = 0
+  
+  let filteredData = filteredPieChartData(data)
+  filteredData.forEach(d => {
+    if (d.shooter_deceased === 'alive') {
+      alive += 1
+    }
+    if (d.shooter_deceased === 'suicide') {
+      suicide += 1
+    }
+    if (d.shooter_deceased === 'police') {
+      police += 1
+    }
+    if (d.shooter_deceased === 'others') {
+      others += 1
+    }
+  });
+
+  return [
+    { name: 'alive', value: alive / 387},
+    { name: 'killed by police', value: police / 387},
+    { name: 'suicide', value: suicide / 387},
+    { name: 'others or N/A', value: others / 387},
+  ];
+}
 
 let data = null; // Initialize data variable
 d3.tsv('../../data/words.tsv')
@@ -226,6 +276,7 @@ d3.tsv('../../data/words.tsv')
   
 let shootings = null;
 let heatmaps = null;
+let piechart = null;
 let heatmaps_len = 0;
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
@@ -233,9 +284,11 @@ d3.csv('../../data/school-shootings.csv')
     shootings = getOcc(loadedData);
     heatmaps = getHeatMapData(loadedData)
     heatmaps_len = heatmaps.occurence.length;
-    console.log('xxxx', heatmaps, heatmaps_len)
+    piechart = getDeceasedData(loadedData)
+    console.log('xxx', piechart)
     display(shootings)
     display(heatmaps)
+    display(piechart)
   })
   .catch(function(error) {
     // Handle error if data loading fails
@@ -406,6 +459,7 @@ function scrollVis(){
      */
     let count_g = null;
     let map_g = null;
+    let pie_g = null;
     
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
@@ -476,7 +530,6 @@ function scrollVis(){
         .domain(heatmaps.occurence)
         .rangeRound([0, height])
 
-        console.log('xxxx', d3.min(heatmaps.years))
 
         /*
         // count openvis title
@@ -515,6 +568,44 @@ function scrollVis(){
 
         g.selectAll('.count-title')
         .attr('opacity', 0);
+
+        // pie chart
+        var color = d3.scaleOrdinal(['#fff0f0', '#cbcbcb', '#ffaeb5', '#e1e1ff']);
+        if (piechart){
+            var pie = d3.pie()
+                .value((d) =>  d.value)
+                .startAngle(0)
+                .padAngle(.025)
+                (piechart);
+
+            var arc = d3.arc()
+                .innerRadius(80)
+                .outerRadius(160)
+            
+            pie_g = svg.append("g")
+                .attr("class", "pie")
+                .attr("transform", `translate(300, 300)`);
+            
+            var arcs = pie_g.selectAll("arc")
+                .data(pie)
+                .enter()
+                .append("g");
+            
+            arcs.append("path")
+                .attr("fill", (_, i) => color(i))
+                .attr("d", arc);
+
+            // draw the label outside the dobut chart
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.5 + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => piechart[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+        }    
 
         // square grid
         // @v4 Using .merge here to ensure
@@ -772,7 +863,8 @@ function scrollVis(){
         map_g
         .transition()
         .duration(0)
-        .attr('opacity', 0);    
+        .attr('opacity', 0); 
+        
 
         g.selectAll('.count-title')
         .transition()
@@ -799,7 +891,7 @@ function scrollVis(){
      */
     function highlightGrid() {
         hideAxis();
-        g.selectAll('.bar')
+        g.selectAll('.bar .pie')
         .transition()
         .duration(600)
         .attr('width', 0);
@@ -871,7 +963,7 @@ function scrollVis(){
         .attr('y', function () { return height; })
         .style('opacity', 0);
 
-        g.selectAll('.bar')
+        g.selectAll('.bar .pie')
         .transition()
         .delay(function (d, i) { return 300 * (i + 1);})
         .duration(600)
@@ -902,7 +994,7 @@ function scrollVis(){
         .duration(0)
         .attr('opacity', 0);
 
-        g.selectAll('.bar')
+        g.selectAll('.bar .pie')
         .transition()
         .duration(600)
         .attr('width', 0);
