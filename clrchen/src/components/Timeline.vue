@@ -406,6 +406,7 @@ function scrollVis(){
      */
     let count_g = null;
     let map_g = null;
+    
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
     const color_cat = d3.scaleOrdinal(d3.schemePastel1)
@@ -477,7 +478,6 @@ function scrollVis(){
 
         console.log('xxxx', d3.min(heatmaps.years))
 
-
         /*
         // count openvis title
         g.append('text')
@@ -498,7 +498,6 @@ function scrollVis(){
         map_g.attr('opacity', 0);
        }
         
-
         /*
         // count filler word count title
         g.append('text')
@@ -1101,7 +1100,7 @@ function scrollVis(){
         .thresholds(xHistScale.ticks(10))
         .value(function (d) { return d.min; })(thirtyMins);
     }
-
+    
     /**
     * groupByWord - group words together
     * using nest. Used to get counts for
