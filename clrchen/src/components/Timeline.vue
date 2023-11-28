@@ -60,6 +60,7 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { Legend, Swatches } from "d3-color-legend"
+import { map } from "d3";
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -404,6 +405,8 @@ function scrollVis(){
      * @param histData - binned histogram data
      */
     let count_g = null;
+    let map_g = null;
+    
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
     const color_cat = d3.scaleOrdinal(d3.schemePastel1)
@@ -421,13 +424,15 @@ function scrollVis(){
         g.select('.x.axis').style('opacity', 0);
 
         // draw the map
-        let path = d3.geoPath()
-        
         if (us) {
-            g.append("g")
-            .attr('class', 'title openvis-title')
-            .attr('width', width + margin.left + margin.right)
-            .attr('height', height + margin.top + margin.bottom)
+            let path = d3.geoPath()
+            map_g = svg.append("g")
+            // g.append("g")
+            // .attr('class', 'title openvis-title')
+            // .attr("viewBox", [0, 0, width - margin.left - margin.right, height - margin.bottom - margin.top])
+            .attr("width", width - margin.left - margin.right)
+            .attr("height", height - margin.top - margin.bottom)
+            .attr("viewBox", `0 0 ${width - margin.left - margin.right} ${height - margin.top - margin.bottom}`)
             .selectAll("path")
             .data(topojson.feature(us, us.objects.states).features)
             .enter().append("path")
@@ -441,7 +446,7 @@ function scrollVis(){
                     return "white"
                 };
             })
-        
+
             // Adding text labels
             count_g = svg.append("g")
             .selectAll("text")
@@ -473,38 +478,6 @@ function scrollVis(){
 
         console.log('xxxx', d3.min(heatmaps.years))
 
-
-        if (heatmaps) {
-            svg.append("g")
-            .call(g => g.append("g")
-            .call(d3.axisTop(x).tickValues(heatmaps.years).ticks(null, "d"))
-            .call(g => g.select(".domain").remove()))
-            
-            svg.append("g")
-            .call(d3.axisLeft(y).tickSize(0))
-            .call(g => g.select(".domain").remove());
-
-            let rects = svg.append("g")
-            .selectAll("g")
-            .data(heatmaps.twoDArray)
-            .join("g")
-            .attr("transform", (d, i) => `translate(0,${y(heatmaps.occurence[i])})`)
-            .selectAll("rect")
-            .data(d => d)
-            .join("rect")
-            .attr("x", (d, i) => x(heatmaps.years[i]) + 1)
-            .attr("width", (d, i) => {
-                console.log('xxxx', x(heatmaps.years[i] + 1) - x(heatmaps.years[i]) - 1)
-                return x(heatmaps.years[i] + 1) - x(heatmaps.years[i]) - 1})
-            .attr("height", y.bandwidth() - 1)
-            .attr("fill", d => {return color_occurence(d.cat)})}
-
-            rects.transition()
-                .duration(5000)
-                .style("fill",(d,i)=> {return color_event(d.value)})
-            rects.append("title")
-                .text((d, i) => `${d.value} events in ${heatmaps.years[i]}`)
-
         /*
         // count openvis title
         g.append('text')
@@ -521,9 +494,10 @@ function scrollVis(){
         .text('Influenced by Columbine Shooting Event in the US');
         */
 
-        g.selectAll('.openvis-title')
-        .attr('opacity', 0);
-
+       if (map_g) {
+        map_g.attr('opacity', 0);
+       }
+        
         /*
         // count filler word count title
         g.append('text')
@@ -689,17 +663,20 @@ function scrollVis(){
         .duration(0)
         .attr('opacity', 0);
 
-        g.selectAll('.openvis-title')
-        .transition()
-        .duration(600)
-        // .attr("fill",(d) => { 
-        //     if (valuemap.get(d.properties.name)) {
-        //         return color_cat(valuemap.get(d.properties.name)) 
-        //     } else {
-        //         return "white"
-        //     };
-        // })
-        .attr('opacity', 1.0)
+        // g.selectAll('.openvis-title')
+        if (map_g) {
+            map_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0)
+            .style("fill",(d) => { 
+                if (valuemap.get(d.properties.name)) {
+                    return color_cat(valuemap.get(d.properties.name)) 
+                } else {
+                    return "white"
+                };
+            })
+        }
 
         if (count_g) {
             count_g
@@ -723,30 +700,33 @@ function scrollVis(){
      *
      */
     function showFillerTitle() {
-        g.selectAll('.openvis-title .county')
-        .transition()
-        .duration(1000)
-        // .attr('opacity', 0);
-        // .transition()
-        .attr("fill",(d) => {
-            if(valuemap.get(d.properties.name)) {
-                return color_gradient(valuemap.get(d.properties.name)) 
-            } else {
-                return "white"
-            };
-        })
-        .transition()
-        .attr("fill",(d) => {
-            if (d.properties.name == "Colorado") {
-                return ("#773737");
-            } else {
-                if(valuemap.get(d.properties.name)){
+        // g.selectAll('.openvis-title .county')
+        if (map_g) {
+            map_g
+            .transition()
+            .duration(1000)
+            // .attr('opacity', 0);
+            // .transition()
+            .style("fill",(d) => {
+                if(valuemap.get(d.properties.name)) {
                     return color_gradient(valuemap.get(d.properties.name)) 
                 } else {
                     return "white"
                 };
-            }
-        })
+            })
+            .transition()
+            .style("fill",(d) => {
+                if (d.properties.name == "Colorado") {
+                    return ("#773737");
+                } else {
+                    if(valuemap.get(d.properties.name)){
+                        return color_gradient(valuemap.get(d.properties.name)) 
+                    } else {
+                        return "white"
+                    };
+                }
+            })
+        }
 
         g.selectAll('.square')
         .transition()
@@ -763,7 +743,7 @@ function scrollVis(){
             count_g
             .transition()
             .duration(0)
-            .attr('opacity', 0);
+            .attr('opacity', 1.0);
         } else {
             console.log('no count_g')
         }
@@ -778,7 +758,18 @@ function scrollVis(){
      *
      */
     function showGrid() {
-        g.selectAll('.openvis-title .county')
+        if (count_g) {
+            count_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 0)
+            console.log(count_g)
+        } else {
+            console.log('no count_g')
+        }
+
+        // g.selectAll('.openvis-title .county')
+        map_g
         .transition()
         .duration(0)
         .attr('opacity', 0);    
@@ -1109,7 +1100,7 @@ function scrollVis(){
         .thresholds(xHistScale.ticks(10))
         .value(function (d) { return d.min; })(thirtyMins);
     }
-
+    
     /**
     * groupByWord - group words together
     * using nest. Used to get counts for
