@@ -257,7 +257,7 @@ d3.json('../../data/states-albers-10m.json')
 function scrollVis(){
     // constants to define the size
     // and margins of the vis area.
-    var width = 600;
+    var width = 993;
     var height = 520;
     var margin = { top: 0, left: 20, bottom: 40, right: 10 };
 
@@ -1193,9 +1193,9 @@ function display(data) {
 
 </script>
 <style scoped>
-.container {
+/* .container {
   width: 890px;
-}
+} */
 
 #graphic {
   padding-top: 60px;
@@ -1239,7 +1239,7 @@ function display(data) {
   z-index: 1;
   margin-left: 0;
   /* height: 600px; */
-  /* width: 600px; */
+  width: 100%;
   /* background-color: red; */
 }
 
