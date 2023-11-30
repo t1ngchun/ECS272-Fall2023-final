@@ -59,9 +59,7 @@ import * as topojson from "topojson"
 import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
-import { Legend, Swatches } from "d3-color-legend"
-import { map, pie } from "d3";
-import { filterShootingType, filterShooterDeceased, filterWeaponSource } from "./utils"
+import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -71,16 +69,6 @@ function convertRegion(input)  {
             return (region[1]);
         }
     }
-}
-function groupBy(objectArray, property) {
-  return objectArray.reduce(function (acc, obj) {
-    let key = obj[property]
-    if (!acc[key]) {
-      acc[key] = []
-    }
-    acc[key].push(obj)
-    return acc
-  }, {})
 }
 // for geo map
 function filterDataByState(data) {
