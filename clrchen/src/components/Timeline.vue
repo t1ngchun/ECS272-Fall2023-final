@@ -308,18 +308,18 @@ function getWeaponData (data) {
     ];
 }
 
-let data = null; // Initialize data variable
-d3.tsv('../../data/words.tsv')
-  .then(function(loadedData) {
-    // Assign loaded data to the variable
-    data = loadedData;
-    // Call display function once the data is loaded
-    display(data);
-  })
-  .catch(function(error) {
-    // Handle error if data loading fails
-    console.error('Error loading data:', error);
-  });
+// let data = null; // Initialize data variable
+// d3.tsv('../../data/words.tsv')
+//   .then(function(loadedData) {
+//     // Assign loaded data to the variable
+//     data = loadedData;
+//     // Call display function once the data is loaded
+//     display(data);
+//   })
+//   .catch(function(error) {
+//     // Handle error if data loading fails
+//     console.error('Error loading data:', error);
+//   });
   
 let shootings = null;
 let heatmaps = null;
@@ -329,7 +329,20 @@ let weaponPieData = null;
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
     // Assign loaded data to the variable
+    // console.log(loadedData)
+    const convertedData = loadedData.map(item => {
+    // Convert 'year' property to a number, keep other properties unchanged
+        return {
+            ...item,
+            year: !isNaN(item.year) ? +item.year : item.year
+        };
+    });
+    console.log(convertedData)
     shootings = getOcc(loadedData);
+    heatmaps = getHeatMapData(convertedData)
+    heatmaps_len = heatmaps.occurence.length;
+    piechart = getDeceasedData(loadedData)
+
     display(shootings)
 
     // heatmaps = getHeatMapData(loadedData)
@@ -360,12 +373,18 @@ d3.json('../../data/states-albers-10m.json')
     // Handle error if data loading fails
     console.error('Error loading data:', error);
   });
+/*
+ * scrollVis - encapsulates
+ * all the code for the visualization
+ * using reusable charts pattern:
+ * http://bost.ocks.org/mike/chart/
+ */
 
 function scrollVis(){
     // constants to define the size
     // and margins of the vis area.
-    var width = 993;
-    var height = 700;
+    var width = 975;
+    var height = 610;
     var margin = { top: 0, left: 20, bottom: 40, right: 10 };
 
     // Keep track of which visualization
@@ -376,10 +395,10 @@ function scrollVis(){
     var lastIndex = -1;
     var activeIndex = 0;
 
-    // Sizing for the grid visualization
-    var squareSize = 6;
-    var squarePad = 2;
-    var numPerRow = width / (squareSize + squarePad);
+    // // Sizing for the grid visualization
+    // var squareSize = 6;
+    // var squarePad = 2;
+    // var numPerRow = width / (squareSize + squarePad);
 
     // main svg used for visualization
     var svg = null;
@@ -391,54 +410,54 @@ function scrollVis(){
     // We will set the domain when the
     // data is processed.
     // @v4 using new scale names
-    var xBarScale = d3.scaleLinear()
-        .range([0, width]);
+    // var xBarScale = d3.scaleLinear()
+    //     .range([0, width]);
 
     // The bar chart display is horizontal
     // so we can use an ordinal scale
     // to get width and y locations.
     // @v4 using new scale type
-    var yBarScale = d3.scaleBand()
-        .paddingInner(0.08)
-        .domain([0, 1, 2])
-        .range([0, height - 50]);
+    // var yBarScale = d3.scaleBand()
+    //     .paddingInner(0.08)
+    //     .domain([0, 1, 2])
+    //     .range([0, height - 50]);
 
     // Color is determined just by the index of the bars
-    var barColors = { 0: '#008080', 1: '#399785', 2: '#5AAF8C' };
+    // var barColors = { 0: '#008080', 1: '#399785', 2: '#5AAF8C' };
 
     // The histogram display shows the
     // first 30 minutes of data
     // so the range goes from 0 to 30
     // @v4 using new scale name
-    var xHistScale = d3.scaleLinear()
-        .domain([0, 30])
-        .range([0, width - 20]);
+    // var xHistScale = d3.scaleLinear()
+    //     .domain([0, 30])
+    //     .range([0, width - 20]);
 
     // @v4 using new scale name
-    var yHistScale = d3.scaleLinear()
-        .range([height, 0]);
+    // var yHistScale = d3.scaleLinear()
+    //     .range([height, 0]);
 
     // The color translation uses this
     // scale to convert the progress
     // through the section into a
     // color value.
     // @v4 using new scale name
-    var coughColorScale = d3.scaleLinear()
-        .domain([0, 1.0])
-        .range(['#008080', 'red']);
+    // var coughColorScale = d3.scaleLinear()
+    //     .domain([0, 1.0])
+    //     .range(['#008080', 'red']);
 
     // You could probably get fancy and
     // use just one axis, modifying the
     // scale, but I will use two separate
     // ones to keep things easy.
     // @v4 using new axis name
-    var xAxisBar = d3.axisBottom()
-        .scale(xBarScale);
+    // var xAxisBar = d3.axisBottom()
+    //     .scale(xBarScale);
 
     // @v4 using new axis name
-    var xAxisHist = d3.axisBottom()
-        .scale(xHistScale)
-        .tickFormat(function (d) { return d + ' min'; });
+    // var xAxisHist = d3.axisBottom()
+    //     .scale(xHistScale)
+    //     .tickFormat(function (d) { return d + ' min'; });
 
     // When scrolling to a new section
     // the activation function for that
@@ -458,59 +477,50 @@ function scrollVis(){
      *  example, we will be drawing it in #vis
      */
     var chart = function (selection) {
-        selection.each(function (rawData) {
-            // create svg and give it a width and height
-            svg = d3.select(this).selectAll('svg').data([wordData]);
-            var svgE = svg.enter().append('svg');
-            // @v4 use merge to combine enter and existing selection
-            svg = svg.merge(svgE);
-
-            svg.attr('width', width + margin.left + margin.right);
-            svg.attr('height', height + margin.top + margin.bottom);
+        selection.each(function () {
+        
+        svg = d3.select('#vis')
+            .selectAll('svg')
+            .data([null]) 
+            .join('svg') 
+            .attr("viewBox", [0, 0, width, height])
+            .attr("width", width )
+            .attr("height", height );
 
             svg.append('g');
 
+        // This group element will be used to contain all other elements.
+        g = svg.select('g')
+            .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
-            // this group element will be used to contain all
-            // other elements.
-            g = svg.select('g')
-                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+        // perform some preprocessing on raw data
+        // var wordData = getWords([rawData]);
+        // filter to just include filler words
+        // var fillerWords = getFillerWords(wordData);
 
-            // perform some preprocessing on raw data
-            var wordData = getWords([rawData]);
-            // filter to just include filler words
-            var fillerWords = getFillerWords(wordData);
+        // get the counts of filler words for the
+        // bar chart display
+        // var fillerCounts = groupByWord(fillerWords);
+        // set the bar scale's domain
+        // var countMax = d3.max(fillerCounts, function (d) { return d.value;});
+        // xBarScale.domain([0, countMax]);
 
-            // get the counts of filler words for the
-            // bar chart display
-            var fillerCounts = groupByWord(fillerWords);
-            // set the bar scale's domain
-            var countMax = d3.max(fillerCounts, function (d) { return d.value;});
-            xBarScale.domain([0, countMax]);
 
             // get aggregated histogram data
 
-            var histData = getHistogram(fillerWords);
-            // set histogram's domain
-            var histMax = d3.max(histData, function (d) { return d.length; });
-            yHistScale.domain([0, histMax]);
-
-            setupVis(wordData, fillerCounts, histData);
+        // var histData = getHistogram(fillerWords);
+        // set histogram's domain
+        // var histMax = d3.max(histData, function (d) { return d.length; });
+        // yHistScale.domain([0, histMax]);
+        
+        setupVis();
 
             setupSections();
         });
     };
 
 
-    /**
-     * setupVis - creates initial elements for all
-     * sections of the visualization.
-     *
-     * @param wordData - data object for each word.
-     * @param fillerCounts - nested data that includes
-     *  element for each filler word type.
-     * @param histData - binned histogram data
-     */
+
     let count_g = null;
     let map_g = null;
     let deceased_pie_g = null;
@@ -522,25 +532,32 @@ function scrollVis(){
     const color_cat = d3.scaleOrdinal(d3.schemePastel1)
     const color_gradient = d3.scaleOrdinal(d3.schemeGreys[4]).domain(["Low", "Moderate", "High", "Very High"])
     // for heatmap
+    const color_event = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps.values1DArray)])
+    const color_occurence = d3.scaleOrdinal(d3.schemeGreys[4]).domain(["Low", "Moderate", "High", "Very High"])
+    /**
+     * setupVis - creates initial elements for all
+     * sections of the visualization.
+     *
+     * @param wordData - data object for each word.
+     * @param fillerCounts - nested data that includes
+     *  element for each filler word type.
+     * @param histData - binned histogram data
+     */
+    var setupVis = function () {
+        // // axis
+        // g.append('g')
+        // .attr('class', 'x axis')
+        // .attr('transform', 'translate(0,' + height + ')')
+        // .call(xAxisBar);
+        // g.select('.x.axis').style('opacity', 0);
 
-    var setupVis = function (wordData, fillerCounts, histData) {
-        // axis
-        g.append('g')
-        .attr('class', 'x axis')
-        .attr('transform', 'translate(0,' + height + ')')
-        .call(xAxisBar);
-        g.select('.x.axis').style('opacity', 0);
 
         // draw the map
         if (us) {
+            // Calculate the projection scale based on viewBox size and map data extent
+            
             let path = d3.geoPath()
-            map_g = svg.append("g")
-            // g.append("g")
-            // .attr('class', 'title openvis-title')
-            // .attr("viewBox", [0, 0, width - margin.left - margin.right, height - margin.bottom - margin.top])
-            .attr("width", width - margin.left - margin.right)
-            .attr("height", height - margin.top - margin.bottom)
-            .attr("viewBox", `0 0 ${width - margin.left - margin.right} ${height - margin.top - margin.bottom}`)
+            map_g = g.append("g")            
             .selectAll("path")
             .data(topojson.feature(us, us.objects.states).features)
             .enter().append("path")
@@ -556,7 +573,7 @@ function scrollVis(){
             })
 
             // Adding text labels
-            count_g = svg.append("g")
+            count_g = g.append("g")
             .selectAll("text")
             .data(topojson.feature(us, us.objects.states).features)
             .enter().append("text")
@@ -575,17 +592,140 @@ function scrollVis(){
             .style("font-size", "10px") // Set the font size
             .style("fill", "black"); // Set the text color
         }
+        if(heatmaps){
+           
+            const rowHeight = 50;
+            const RectsHeight = rowHeight * heatmaps.occurence.length + margin.top + margin.bottom;
+            const x = d3.scaleLinear()
+                .domain([d3.min(heatmaps.years), d3.max(heatmaps.years) + 1])
+                .range([margin.left+35, width-margin.right-15])
+            const y = d3.scaleBand()
+                .domain(heatmaps.occurence)
+                .rangeRound([height/2, height/2+RectsHeight - margin.bottom])
+            
+            const x_axis = g.append("g")
+                .call(g => g.append("g")
+                    .attr("transform", `translate(0,${height/2})`)
+                    .call(d3.axisTop(x).tickValues(heatmaps.years).ticks(null, "d"))
+                    .call(g => g.select(".domain").remove()))
+            g.append("g")
+                .attr("transform", `translate(${margin.left+25},0)`)
+                .call(d3.axisLeft(y).tickSize(0))
+                .call(g => g.select(".domain").remove());
+            let rects = g.append("g")
+                .selectAll("g")
+                .data(heatmaps.twoDArray)
+                .join("g")
+                    .attr("transform", (d, i) => `translate(0,${y(heatmaps.occurence[i])})`)
+                .selectAll("rect")
+                .data(d => d)
+                .join("rect")
+                    .attr("x", (d, i) => x(heatmaps.years[i]) + 1)
+                    .attr("width", (d, i) => x(heatmaps.years[i] + 1) - x(heatmaps.years[i]) - 1)
+                    .attr("height", y.bandwidth()-1)
+                    .attr("fill", d => {return color_occurence(d.cat)})
+            
+        rects.transition()
+            .duration(5000)
+            .style("fill",(d,i)=> {return color_event(d.value)})
+                    
+        const xAxis = x_axis
+        .append("g")
+        .style("opacity",0)
+        .attr("transform", `translate(0,${height - margin.bottom*1.5})`)
+        .call(d3.axisBottom(x)
+                .tickValues([heatmaps.year])
+                .tickFormat(x => x)
+                .tickSize(-RectsHeight-margin.bottom))
+                .style("color","red")
+            .call(g => g.select(".tick text")
+                .attr("dy","1.5em")
+                .clone()
+                .attr("dy", "3em")
+                .style("font-weight", "bold")
+                .text("Columbine Event"))
+            .call(g => g.select(".domain").remove())
 
-        // const x = d3.scaleLinear()
-        // .domain([d3.min(heatmaps.years), d3.max(heatmaps.years) + 1])
-        // .range([0, width])
+        xAxis.transition()
+             .duration(8000)
+             .style("opacity",0.3)
+                        
+                
+            
 
-        // const y = d3.scaleBand()
-        // .domain(heatmaps.occurence)
-        // .rangeRound([0, height])
+            // legend
+
+            const legendWidth = 300;
+            const legendHeight = 15;
+            const numColorSteps = 100; 
+
+            const legend = g.append("g")
+                .attr("class", "legend")
+                .attr("transform", `translate(${margin.left + 35}, ${height / 3})`);
+
+            const defs = legend.append("defs");
+            const linearGradient = defs.append("linearGradient")
+                .attr("id", "legendGradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "100%")
+                .attr("y2", "0%");
+
+            const domainValues = color_event.domain();
+            const step = (domainValues[1] - domainValues[0]) / numColorSteps;
+            for (let i = 0; i <= numColorSteps; i++) {
+                linearGradient.append("stop")
+                    .attr("offset", `${(i * 100) / numColorSteps}%`)
+                    .attr("stop-color", color_event(domainValues[0] + step * i));
+            }
+
+            legend.append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .style("fill", "url(#legendGradient)");
+
+            const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
+
+            const positionsInLegend = colorRange.map(value => {
+                const mappedPosition = ((value - color_event.domain()[0]) / (color_event.domain()[1] - color_event.domain()[0])) * legendWidth;
+                return mappedPosition;
+            });
 
 
-        /*
+            const lengendValPos = colorRange.map((value, index) => {
+                return {
+                    value: parseFloat(value.toFixed(1)),
+                    position: positionsInLegend[index]
+                };
+            });
+
+            legend.selectAll("line.quantile")
+                .data(lengendValPos)
+                .enter().append("line")
+                .attr("class", "quantile")
+                .attr("x1", d => (d.position))
+                .attr("y1", -3)
+                .attr("x2", d => (d.position))
+                .attr("y2", legendHeight+3)
+                .style("stroke", "black")
+                .style("stroke-width", 1);
+
+            legend.selectAll("text")
+                .data(lengendValPos) // You can choose specific values to display on the legend
+                .enter().append("text")
+                .attr("x", d => (d.position-5))
+                .attr("y", legendHeight + 20)
+                .text(d => (d.value));
+
+
+
+
+        }
+
+
+        
         // count openvis title
         g.append('text')
         .attr('class', 'title openvis-title')
@@ -599,7 +739,7 @@ function scrollVis(){
         .attr('x', width / 2)
         .attr('y', (height / 3) + (height / 5))
         .text('Influenced by Columbine Shooting Event in the US');
-        */
+        
 
         if (map_g) {
             map_g.attr('opacity', 0);
@@ -609,23 +749,21 @@ function scrollVis(){
             count_g.attr('opacity', 0);
         }
         
-        /*
+
         // count filler word count title
-        g.append('text')
-        .attr('class', 'title count-title highlight')
-        .attr('x', width / 2)
-        .attr('y', height / 3)
-        .text('180');
+        // g.append('text')
+        // .attr('class', 'title count-title highlight')
+        // .attr('x', width / 2)
+        // .attr('y', height / 3)
+        // .text('180');
 
-        g.append('text')
-        .attr('class', 'sub-title count-title')
-        .attr('x', width / 2)
-        .attr('y', (height / 3) + (height / 5))
-        .text('Filler Words');
-        */
+        // g.append('text')
+        // .attr('class', 'sub-title count-title')
+        // .attr('x', width / 2)
+        // .attr('y', (height / 3) + (height / 5))
+        // .text('Filler Words');
 
-        g.selectAll('.count-title')
-        .attr('opacity', 0);
+
 
         // pie chart
         var deceasedColor = d3.scaleOrdinal(['#fff0f0', '#cbcbcb', '#ffaeb5', '#e1e1ff']);
@@ -749,58 +887,58 @@ function scrollVis(){
         // square grid
         // @v4 Using .merge here to ensure
         // new and old data have same attrs applied
-        var squares = g.selectAll('.square').data(wordData, function (d) { return d.word; });
-        var squaresE = squares.enter()
-        .append('rect')
-        .classed('square', true);
-        squares = squares.merge(squaresE)
-        .attr('width', squareSize)
-        .attr('height', squareSize)
-        .attr('fill', '#fff')
-        .classed('fill-square', function (d) { return d.filler; })
-        .attr('x', function (d) { return d.x;})
-        .attr('y', function (d) { return d.y;})
-        .attr('opacity', 0);
+        // var squares = g.selectAll('.square').data(wordData, function (d) { return d.word; });
+        // var squaresE = squares.enter()
+        // .append('rect')
+        // .classed('square', true);
+        // squares = squares.merge(squaresE)
+        // .attr('width', squareSize)
+        // .attr('height', squareSize)
+        // .attr('fill', '#fff')
+        // .classed('fill-square', function (d) { return d.filler; })
+        // .attr('x', function (d) { return d.x;})
+        // .attr('y', function (d) { return d.y;})
+        // .attr('opacity', 0);
 
         // barchart
         // @v4 Using .merge here to ensure
         // new and old data have same attrs applied
-        var bars = g.selectAll('.bar').data(fillerCounts);
-        var barsE = bars.enter()
-        .append('rect')
-        .attr('class', 'bar');
-        bars = bars.merge(barsE)
-        .attr('x', 0)
-        .attr('y', function (d, i) { return yBarScale(i);})
-        .attr('fill', function (d, i) { return barColors[i]; })
-        .attr('width', 0)
-        .attr('height', yBarScale.bandwidth());
+        // var bars = g.selectAll('.bar').data(fillerCounts);
+        // var barsE = bars.enter()
+        // .append('rect')
+        // .attr('class', 'bar');
+        // bars = bars.merge(barsE)
+        // .attr('x', 0)
+        // .attr('y', function (d, i) { return yBarScale(i);})
+        // .attr('fill', function (d, i) { return barColors[i]; })
+        // .attr('width', 0)
+        // .attr('height', yBarScale.bandwidth());
 
-        var barText = g.selectAll('.bar-text').data(fillerCounts);
-        barText.enter()
-        .append('text')
-        .attr('class', 'bar-text')
-        .text(function (d) { return d.key + '…'; })
-        .attr('x', 0)
-        .attr('dx', 15)
-        .attr('y', function (d, i) { return yBarScale(i);})
-        .attr('dy', yBarScale.bandwidth() / 1.2)
-        .style('font-size', '110px')
-        .attr('fill', 'white')
-        .attr('opacity', 0);
+        // var barText = g.selectAll('.bar-text').data(fillerCounts);
+        // barText.enter()
+        // .append('text')
+        // .attr('class', 'bar-text')
+        // .text(function (d) { return d.key + '…'; })
+        // .attr('x', 0)
+        // .attr('dx', 15)
+        // .attr('y', function (d, i) { return yBarScale(i);})
+        // .attr('dy', yBarScale.bandwidth() / 1.2)
+        // .style('font-size', '110px')
+        // .attr('fill', 'white')
+        // .attr('opacity', 0);
 
         // histogram
         // @v4 Using .merge here to ensure
         // new and old data have same attrs applied
-        var hist = g.selectAll('.hist').data(histData);
-        var histE = hist.enter().append('rect')
-        .attr('class', 'hist');
-        hist = hist.merge(histE).attr('x', function (d) { return xHistScale(d.x0); })
-        .attr('y', height)
-        .attr('height', 0)
-        .attr('width', xHistScale(histData[0].x1) - xHistScale(histData[0].x0) - 1)
-        .attr('fill', barColors[0])
-        .attr('opacity', 0);
+        // var hist = g.selectAll('.hist').data(histData);
+        // var histE = hist.enter().append('rect')
+        // .attr('class', 'hist');
+        // hist = hist.merge(histE).attr('x', function (d) { return xHistScale(d.x0); })
+        // .attr('y', height)
+        // .attr('height', 0)
+        // .attr('width', xHistScale(histData[0].x1) - xHistScale(histData[0].x0) - 1)
+        // .attr('fill', barColors[0])
+        // .attr('opacity', 0);
 
 
     };
@@ -1419,6 +1557,13 @@ function scrollVis(){
     // return chart function
     return chart;
 }
+
+/*
+ * display - called once data
+ * has been loaded.
+ * sets up the scroller and
+ * displays the visualization.
+ */
 function display(data) {
     // create a new plot and
     // display it
@@ -1450,19 +1595,7 @@ function display(data) {
     });
 }
 
-/*
- * scrollVis - encapsulates
- * all the code for the visualization
- * using reusable charts pattern:
- * http://bost.ocks.org/mike/chart/
- */
 
-/*
- * display - called once data
- * has been loaded.
- * sets up the scroller and
- * displays the visualization.
- */
 
 
 
@@ -1480,7 +1613,7 @@ function display(data) {
 #sections {
   position: relative;
   display: inline-block;
-  width: 250px;
+  width: 300px;
   top: 0px;
   z-index: 90;
   padding-bottom: 200px;
@@ -1545,4 +1678,7 @@ function display(data) {
   stroke-width: 4px;
 
 }
+
+
+
 </style>
