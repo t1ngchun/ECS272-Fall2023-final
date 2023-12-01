@@ -340,8 +340,9 @@ d3.csv('../../data/school-shootings.csv')
     console.log(convertedData)
     shootings = getOcc(loadedData);
     heatmaps = getHeatMapData(convertedData)
-    heatmaps_len = heatmaps.occurence.length;
-    piechart = getDeceasedData(loadedData)
+    // shootingPieData = getShootingData(loadedData)
+    // deceasedPieData = getDeceasedData(loadedData)
+    // weaponPieData = getWeaponData(loadedData)
 
     display(shootings)
 
