@@ -59,9 +59,7 @@ import * as topojson from "topojson"
 import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
-import { Legend, Swatches } from "d3-color-legend"
-import { map } from "d3";
-import { filterShootingType, filterShooterDeceased, filterWeaponSource } from "./utils"
+import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -71,19 +69,6 @@ function convertRegion(input)  {
             return (region[1]);
         }
     }
-    
-    
-}
-function groupBy(objectArray, property) {
-  return objectArray.reduce(function (acc, obj) {
-    let key = obj[property]
-    if (!acc[key]) {
-      acc[key] = []
-    }
-    // console.log(acc);
-    acc[key].push(obj)
-    return acc
-  }, {})
 }
 // for geo map
 function filterDataByState(data) {
@@ -99,7 +84,6 @@ function filterDataByState(data) {
   });
   return formattedData;
 }
-// for geo map
 function getOcc(data) {
     const dataByState = filterDataByState(data);
     const values = dataByState.map(item => item.value);
@@ -129,9 +113,9 @@ function getOcc(data) {
         const category = occurenceCategories.find((cat) => data.value >= cat.range[0] && data.value < cat.range[1]);
         const cat_occ = category ? category.category : "Unknown";
         let processedObj = {
-        name: data.name,
-        value: data.value,
-        occ_cat: cat_occ
+            name: data.name,
+            value: data.value,
+            occ_cat: cat_occ
         }
         
         formattedData.push(processedObj);
@@ -146,7 +130,7 @@ function getHeatMapData(data) {
         acc[item.name] = item.occ_cat;
         return acc;
     }, {});
-    // console.log(nameToOccCatMap)
+    
     const countByYearCategory = {};
 
     data.forEach((event) => {
@@ -160,10 +144,9 @@ function getHeatMapData(data) {
         countByYearCategory[category][year] = (countByYearCategory[category][year] || 0) + 1;
     });
   
-    // console.log(countByYearCategory)
     years.forEach((year) => {
         occurence.forEach((category) => {
-        countByYearCategory[category][year] = countByYearCategory[category][year] || 0;
+            countByYearCategory[category][year] = countByYearCategory[category][year] || 0;
         });
     });
     let rearrangedObject = {};
@@ -189,9 +172,6 @@ function getHeatMapData(data) {
     twoDArray.push(row);
     }
 
-    // console.log(twoDArray);
-    
-    
     const values = occurence.map(category =>
         years.map(year => countByYearCategory[category][year] || 0)
     );
@@ -199,8 +179,6 @@ function getHeatMapData(data) {
         Object.values(yearCounts)
     );
     
-    // console.log(values1DArray);
-    console.log("years",years)
     return {
         twoDArray,
         values1DArray,
@@ -211,54 +189,123 @@ function getHeatMapData(data) {
 }
 // for pie chart
 function filteredPieChartData(data) {
-  let formattedData = [];
-  Object.keys(data).forEach(d => {
-    let value = data[d];
-    let processedObj = {
-      year: value.year,
-      state: value.state,
-      killed: value.killed,
-      injured: value.injured,
-      casualties: value.casualties,
-      age_shooter: value.age_shooter1,
-      shooting_type: filterShootingType(value.shooting_type),
-      shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
-      weapon_source: filterWeaponSource(value.weapon_source),
-    }
-    if (processedObj.year) {
-      formattedData.push(processedObj);
-    }
-  });
-  return formattedData;
+    let formattedData = [];
+    Object.keys(data).forEach(d => {
+        let value = data[d];
+        let processedObj = {
+            year: value.year,
+            state: value.state,
+            killed: value.killed,
+            injured: value.injured,
+            casualties: value.casualties,
+            age_shooter: value.age_shooter1,
+            shooting_type: filterShootingType(value.shooting_type),
+            shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
+            weapon_source: filterWeaponSource(value.weapon_source),
+        }
+        if (processedObj.year) {
+            formattedData.push(processedObj);
+        }
+    });
+    return formattedData;
 }
 function getDeceasedData(data) {
-  let alive = 0
-  let suicide = 0
-  let police = 0
-  let others = 0
-  
-  let filteredData = filteredPieChartData(data)
-  filteredData.forEach(d => {
-    if (d.shooter_deceased === 'alive') {
-      alive += 1
-    }
-    if (d.shooter_deceased === 'suicide') {
-      suicide += 1
-    }
-    if (d.shooter_deceased === 'police') {
-      police += 1
-    }
-    if (d.shooter_deceased === 'others') {
-      others += 1
-    }
-  });
+    let alive = 0
+    let suicide = 0
+    let police = 0
+    let others = 0
+    
+    let filteredData = filteredPieChartData(data)
+    filteredData.forEach(d => {
+        if (d.shooter_deceased === 'alive') {
+            alive += 1
+        }
+        if (d.shooter_deceased === 'suicide') {
+            suicide += 1
+        }
+        if (d.shooter_deceased === 'police') {
+            police += 1
+        }
+        if (d.shooter_deceased === 'others') {
+            others += 1
+        }
+    });
 
-  return [
-    { name: 'alive', value: alive / 387},
-    { name: 'killed by police', value: police / 387},
-    { name: 'suicide', value: suicide / 387},
-    { name: 'others or N/A', value: others / 387},
-  ];
+    return [
+        { name: 'alive', value: alive / 387},
+        { name: 'killed by police', value: police / 387},
+        { name: 'suicide', value: suicide / 387},
+        { name: 'others or N/A', value: others / 387},
+    ];
+}
+function getShootingData(data) {
+    let targeted = 0
+    let indiscriminate = 0
+    let accidental = 0
+    let others = 0
+    
+    let filteredData = filteredPieChartData(data)
+    filteredData.forEach(d => {
+        if (d.shooting_type === 'targeted') {
+            targeted += 1
+        }
+        if (d.shooting_type === 'indiscriminate') {
+            indiscriminate += 1
+        }
+        if (d.shooting_type === 'accidental') {
+            accidental += 1
+        }
+        if (d.shooting_type === 'others') {
+            others += 1
+        }
+    });
+
+    return [
+        { name: 'targeted', value: targeted / 387},
+        { name: 'indiscriminate', value: indiscriminate / 387},
+        { name: 'accidental', value: accidental / 387},
+        { name: 'others or N/A', value: others / 387},
+    ];
+}
+function getWeaponData (data) {
+    let family = 0
+    let issued = 0
+    let friend = 0
+    let stolen = 0
+    let purchased = 0
+    let others = 0
+    
+    let filteredData = filteredPieChartData(data)
+    filteredData.forEach(d => {
+        console.log(d.weapon_source)
+        if (d.weapon_source === 'family') {
+            family += 1
+        }
+        if (d.weapon_source === 'issued') {
+            issued += 1
+        }
+        if (d.weapon_source === 'friend') {
+            friend += 1
+        }
+        if (d.weapon_source === 'stolen') {
+            stolen += 1
+        }
+        if (d.weapon_source === 'purchased') {
+            purchased += 1
+        }
+        if (d.weapon_source === 'others') {
+            others += 1
+        }
+    });
+
+    return [
+        { name: 'family', value: family / 387},
+        { name: 'issued', value: issued / 387},
+        { name: 'friend', value: friend / 387},
+        { name: 'stolen', value: stolen / 387},
+        { name: 'purchased', value: purchased / 387},
+        { name: 'others or N/A', value: others / 387},
+    ];
 }
 
 // let data = null; // Initialize data variable
@@ -276,8 +323,9 @@ function getDeceasedData(data) {
   
 let shootings = null;
 let heatmaps = null;
-let piechart = null;
-let heatmaps_len = 0;
+let deceasedPieData = null;
+let shootingPieData = null;
+let weaponPieData = null;
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
     // Assign loaded data to the variable
@@ -294,9 +342,20 @@ d3.csv('../../data/school-shootings.csv')
     heatmaps = getHeatMapData(convertedData)
     heatmaps_len = heatmaps.occurence.length;
     piechart = getDeceasedData(loadedData)
+
     display(shootings)
-    display(heatmaps)
-    display(piechart)
+
+    // heatmaps = getHeatMapData(loadedData)
+    // display(heatmaps)
+
+    deceasedPieData = getDeceasedData(loadedData)
+    display(deceasedPieData)
+    
+    shootingPieData = getShootingData(loadedData)
+    display(shootingPieData)
+
+    weaponPieData = getWeaponData(loadedData)
+    display(weaponPieData)
   })
   .catch(function(error) {
     // Handle error if data loading fails
@@ -428,7 +487,7 @@ function scrollVis(){
             .attr("width", width )
             .attr("height", height );
 
-        svg.append('g');
+            svg.append('g');
 
         // This group element will be used to contain all other elements.
         g = svg.select('g')
@@ -446,7 +505,8 @@ function scrollVis(){
         // var countMax = d3.max(fillerCounts, function (d) { return d.value;});
         // xBarScale.domain([0, countMax]);
 
-        // get aggregated histogram data
+
+            // get aggregated histogram data
 
         // var histData = getHistogram(fillerWords);
         // set histogram's domain
@@ -455,7 +515,7 @@ function scrollVis(){
         
         setupVis();
 
-        setupSections();
+            setupSections();
         });
     };
 
@@ -463,7 +523,9 @@ function scrollVis(){
 
     let count_g = null;
     let map_g = null;
-    let pie_g = null;
+    let deceased_pie_g = null;
+    let shooting_pie_g = null;
+    let weapon_pie_g = null;
     
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
@@ -488,6 +550,7 @@ function scrollVis(){
         // .attr('transform', 'translate(0,' + height + ')')
         // .call(xAxisBar);
         // g.select('.x.axis').style('opacity', 0);
+
 
         // draw the map
         if (us) {
@@ -662,8 +725,6 @@ function scrollVis(){
         }
 
 
-
-
         
         // count openvis title
         g.append('text')
@@ -680,10 +741,13 @@ function scrollVis(){
         .text('Influenced by Columbine Shooting Event in the US');
         
 
+        if (map_g) {
+            map_g.attr('opacity', 0);
+        }
 
-    //    if (map_g) {
-    //     map_g.attr('opacity', 0);
-    //    }
+        if (count_g) {
+            count_g.attr('opacity', 0);
+        }
         
 
         // count filler word count title
@@ -700,9 +764,125 @@ function scrollVis(){
         // .text('Filler Words');
 
 
-        // g.selectAll('.count-title')
-        // .attr('opacity', 0);
 
+        // pie chart
+        var deceasedColor = d3.scaleOrdinal(['#fff0f0', '#cbcbcb', '#ffaeb5', '#e1e1ff']);
+        var shootingColor = d3.scaleOrdinal(['#d8e2dc', '#ffe5d9', '#ffcad4', '#f4acb7']);
+        var weaponColor = d3.scaleOrdinal(['#ff99c8', '#fec8c3', '#fcf6bd', '#d0f4de', '#a9def9', '#c7ceea']);
+
+        if (deceasedPieData) {
+            var pie = d3.pie()
+                .value((d) =>  d.value)
+                .startAngle(0)
+                .padAngle(.025)
+                (deceasedPieData);
+
+            var arc = d3.arc()
+                .innerRadius(80)
+                .outerRadius(160)
+            
+            deceased_pie_g = svg.append("g")
+                .attr("class", "pie")
+                .attr("transform", `translate(300, 200)`);
+            
+            var arcs = deceased_pie_g.selectAll("arc")
+                .data(pie)
+                .enter()
+                .append("g");
+            
+            arcs.append("path")
+                .attr("fill", (_, i) => deceasedColor(i))
+                .attr("d", arc);
+
+            // draw the label outside the dobut chart
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.5 + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => deceasedPieData[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+        }
+        if (shootingPieData) {
+            var pie = d3.pie()
+                .value((d) =>  d.value)
+                .startAngle(0)
+                .padAngle(.025)
+                (shootingPieData);
+
+            var arc = d3.arc()
+                .innerRadius(80)
+                .outerRadius(160)
+            
+            shooting_pie_g = svg.append("g")
+                .attr("transform", `translate(750, 200)`);
+            
+            var arcs = shooting_pie_g.selectAll("arc")
+                .data(pie)
+                .enter()
+                .append("g");
+            
+            arcs.append("path")
+                .attr("fill", (_, i) => shootingColor(i))
+                .attr("d", arc);
+
+            // draw the label outside the dobut chart
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.5 + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => shootingPieData[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+        }
+        if (weaponPieData) {
+            var pie = d3.pie()
+                .value((d) =>  d.value)
+                .startAngle(55)
+                .padAngle(.025)
+                (weaponPieData);
+
+            var arc = d3.arc()
+                .innerRadius(80)
+                .outerRadius(160)
+            
+            weapon_pie_g = svg.append("g")
+                .attr("transform", `translate(525, 500)`);
+            
+            var arcs = weapon_pie_g.selectAll("arc")
+                .data(pie)
+                .enter()
+                .append("g");
+            
+            arcs.append("path")
+                .attr("fill", (_, i) => weaponColor(i))
+                .attr("d", arc);
+
+            // draw the label outside the dobut chart
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.5 + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => weaponPieData[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+        }
+
+        if (deceased_pie_g) {
+            deceased_pie_g.attr('opacity', 0);
+        }
+        if (shooting_pie_g) {
+            shooting_pie_g.attr('opacity', 0);
+        }
+        if (weapon_pie_g) {
+            weapon_pie_g.attr('opacity', 0);
+        }
 
         // square grid
         // @v4 Using .merge here to ensure
@@ -760,34 +940,7 @@ function scrollVis(){
         // .attr('fill', barColors[0])
         // .attr('opacity', 0);
 
-        // cough title
-        g.append('text')
-        .attr('class', 'sub-title cough cough-title')
-        .attr('x', width / 2)
-        .attr('y', 60)
-        .text('cough')
-        .attr('opacity', 0);
 
-        // arrowhead from
-        // http://logogin.blogspot.com/2013/02/d3js-arrowhead-markers.html
-        svg.append('defs').append('marker')
-        .attr('id', 'arrowhead')
-        .attr('refY', 2)
-        .attr('markerWidth', 6)
-        .attr('markerHeight', 4)
-        .attr('orient', 'auto')
-        .append('path')
-        .attr('d', 'M 0,0 V 4 L6,2 Z');
-
-        g.append('path')
-        .attr('class', 'cough cough-arrow')
-        .attr('marker-end', 'url(#arrowhead)')
-        .attr('d', function () {
-            var line = 'M ' + ((width / 2) - 10) + ' ' + 80;
-            line += ' l 0 ' + 230;
-            return line;
-        })
-        .attr('opacity', 0);
     };
 
     /**
@@ -808,7 +961,7 @@ function scrollVis(){
         activateFunctions[5] = showHistPart;
         activateFunctions[6] = showHistAll;
         activateFunctions[7] = showCough;
-        activateFunctions[8] = showHistAll;
+        activateFunctions[8] = showPie;
 
         // updateFunctions are called while
         // in a particular section to update
@@ -817,7 +970,7 @@ function scrollVis(){
         // for all scrolling and so are set to
         // no-op functions.
         for (var i = 0; i < 9; i++) {
-        updateFunctions[i] = function () {};
+            updateFunctions[i] = function () {};
         }
         updateFunctions[7] = updateCough;
     };
@@ -871,12 +1024,9 @@ function scrollVis(){
             .transition()
             .duration(600)
             .attr('opacity', 1.0)
-            console.log(count_g)
-        } else {
-            console.log('no count_g')
         }
 
-
+        hidePie();
     }
 
     /**
@@ -932,9 +1082,8 @@ function scrollVis(){
             .transition()
             .duration(0)
             .attr('opacity', 1.0);
-        } else {
-            console.log('no count_g')
         }
+        hidePie();
     }
 
     /**
@@ -946,17 +1095,9 @@ function scrollVis(){
      *
      */
     function showGrid() {
-        if (count_g) {
-            count_g
-            .transition()
-            .duration(600)
-            .attr('opacity', 0)
-            console.log(count_g)
-        } else {
-            console.log('no count_g')
-        }
-
-        // g.selectAll('.openvis-title .county')
+        hideCounty();
+        hidePie();
+        
         map_g
         .transition()
         .duration(0)
@@ -988,6 +1129,9 @@ function scrollVis(){
      */
     function highlightGrid() {
         hideAxis();
+        hidePie();
+        hideCounty();
+
         g.selectAll('.bar .pie')
         .transition()
         .duration(600)
@@ -1035,7 +1179,9 @@ function scrollVis(){
      */
     function showBar() {
         // ensure bar axis is set
-        showAxis(xAxisBar);
+        hideAxis();
+        hidePie();
+        hideCounty();
 
         g.selectAll('.square')
         .transition()
@@ -1084,7 +1230,9 @@ function scrollVis(){
      */
     function showHistPart() {
         // switch the axis to histogram one
-        showAxis(xAxisHist);
+        hideAxis();
+        hidePie();
+        hideCounty();
 
         g.selectAll('.bar-text')
         .transition()
@@ -1118,7 +1266,50 @@ function scrollVis(){
      */
     function showHistAll() {
         // ensure the axis to histogram one
-        showAxis(xAxisHist);
+        hideAxis();
+        hidePie();
+        hideCounty();
+
+        g.selectAll('.cough')
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
+
+        // named transition to ensure
+        // color change is not clobbered
+        g.selectAll('.hist')
+        .transition('color')
+        .duration(500)
+        .style('fill', '#008080');
+
+        g.selectAll('.hist')
+        .transition()
+        .duration(1200)
+        .attr('y', function (d) { return yHistScale(d.length); })
+        .attr('height', function (d) { return height - yHistScale(d.length); })
+        .style('opacity', 1.0);
+    }
+
+    function showPie() {
+        // ensure the axis to histogram one
+        if (deceased_pie_g) {
+            deceased_pie_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0);
+        }
+        if (shooting_pie_g) {
+            shooting_pie_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0);
+        }
+        if (weapon_pie_g) {
+            weapon_pie_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0);
+        }
 
         g.selectAll('.cough')
         .transition()
@@ -1151,7 +1342,8 @@ function scrollVis(){
      */
     function showCough() {
         // ensure the axis to histogram one
-        showAxis(xAxisHist);
+        hideAxis();
+        hidePie();
 
         g.selectAll('.hist')
         .transition()
@@ -1159,6 +1351,7 @@ function scrollVis(){
         .attr('y', function (d) { return yHistScale(d.length); })
         .attr('height', function (d) { return height - yHistScale(d.length); })
         .style('opacity', 1.0);
+
     }
 
     /**
@@ -1186,6 +1379,36 @@ function scrollVis(){
         .style('opacity', 0);
     }
 
+    function hidePie() {
+        if (deceased_pie_g) {
+            deceased_pie_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+        }
+        if (shooting_pie_g) {
+            shooting_pie_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+        }
+        if (weapon_pie_g) {
+            weapon_pie_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+        }
+    }
+
+    function hideCounty() {
+        if (count_g) {
+            count_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 0)
+        }
+    }
+
     /**
      * UPDATE FUNCTIONS
      *
@@ -1206,6 +1429,7 @@ function scrollVis(){
      *  how far user has scrolled in section
      */
     function updateCough(progress) {
+        hidePie();
         g.selectAll('.cough')
         .transition()
         .duration(0)
