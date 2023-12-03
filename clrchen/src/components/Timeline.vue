@@ -699,9 +699,9 @@ function scrollVis(){
             heat_g.attr('opacity', 0);
         }
         // pie chart
-        var deceasedColor = d3.scaleOrdinal(['#fff0f0', '#cbcbcb', '#ffaeb5', '#e1e1ff']);
-        var shootingColor = d3.scaleOrdinal(['#d8e2dc', '#ffe5d9', '#ffcad4', '#f4acb7']);
-        var weaponColor = d3.scaleOrdinal(['#ff99c8', '#fec8c3', '#fcf6bd', '#d0f4de', '#a9def9', '#c7ceea']);
+        var deceasedColor = d3.scaleOrdinal(['#d8e2dc', '#d8e2dc', '#ffcad4', '#cbcbcb']);
+        var shootingColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#cbcbcb']);
+        var weaponColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#cbcbcb']);
 
         if (deceasedPieData) {
             var pie = d3.pie()
@@ -735,6 +735,16 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => deceasedPieData[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] + "," + c[1] + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
@@ -771,6 +781,16 @@ function scrollVis(){
                 .text((d, i) => shootingPieData[i].name)
                 .style("font-size", 10)
                 .attr("fill", "black");
+
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] + "," + c[1] + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
+                .style("font-size", 10)
+                .attr("fill", "black");
         }
         if (weaponPieData) {
             var pie = d3.pie()
@@ -803,6 +823,16 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => weaponPieData[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] + "," + c[1] + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => `${-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
@@ -1028,9 +1058,9 @@ function scrollVis(){
      *  are moved back to their place in the grid
      */
     function highlightGrid() {
-
         hideHeat();
         hideMaptext();
+        hidePie();
 
         g.selectAll('.bar .pie')
         .transition()
