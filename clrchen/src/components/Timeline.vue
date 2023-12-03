@@ -1,53 +1,56 @@
 <template>
-    <div class="container">
-        <div id='graphic'>
-            <div id='sections'>
-            <section class="step">
-                <div class="title">School Shootings Influenced by Columbine Shooting Event in the US</div>
+    <div id='graphic'>
+        <div id='sections'>
+            <section class="step ">
             </section>
-            <section class="step">
-                <div class="title">The Columbine High School Event</div>
-                - April 20, 1999, at Columbine High School in Jefferson County, Colorado, USA.<br>
-                - 12 students and 1 teacher dead with 24 others injured<br>
-                - The deadliest school shooting incident in American history.<br>
-                - The term "Columbine" became synonymous with school shootings.
+            <section class="step boarder">
+                <div class="title">What happened the Columbine High School Event?</div>
+                <span id="intro">
+                    The Columbine High School massacre was a school shooting incident 
+                    that occurred on April 20, 1999, at Columbine High School in Jefferson 
+                    County, Colorado, USA. Two teenage students armed with firearms and explosives, 
+                    entered the campus, resulting in the shooting deaths of 12 students and 1 teacher, 
+                    with 24 others injured. Subsequently, both of them took their own lives. 
+                    This event is regarded as the deadliest school shooting incident in American history. 
+                    The term "Columbine" became synonymous  with school shootings.
+                </span>
             </section>
-            <section class="step">
+            <section class="step boarder">
                 <div class="title">The Columbine Shooting Event triggers a lots of school shooting events.</div>
-                The overview of the total count of the shooting events in each state from 1999 to 2023.
-                The four different categories are based on the frequency of the shooting events occurrence.
+                We divide the states in the US into four regions(<span class="low"> Low </span>,<span class="medium"> Moderate </span>,<span class="high"> High </span> 
+                and<span class="very_high"> Very High </span>). According to the frequency of events occurence.
+                The map is the overview of the total count of the shooting events in each region from 1999 to 2023.
+                
             </section>
-            <section class="step">
+            <section class="step boarder">
                 <div class="title">Heat Map</div>
-                Heat Map description
+                Break down the number of events into individual years, aiming to find out what is happening during the high occurrence year.
+                the color represents the number of shooting events that happened in each group in each year. 
             </section>
-            <section class="step">
+            <section class="step boarder">
                 <div class="title">Line Chart</div>
                 Line Chart description
             </section>
-            <section class="step">
+            <section class="step boarder">
                 <div class="title">Line Chart</div>
                 Line Chart description
             </section>
-            <section class="step">
+            <section class="step boarder">
                 <div class="title">Line Chart</div>
                 Line Chart description
             </section>
-            <section class="step">
+            <section class="step boarder">
                 <div class="title">Line Chart</div>
                 Line Chart description
             </section>
-            <section class="step">
+            <section class="step boarder">
                 <div class="title">Background Information of the Young Shooters</div>
                 1. Where did they get the weapon?<br>
                 2. Did they commit suicide after shooting?<br>
                 3. Did they shoot others on purpose?
             </section>
-            </div>
-            <div id='vis'>
-            </div>
-            <div id="extra-space">
-            </div>
+        </div>
+        <div id='vis'>
         </div>
     </div>
 </template>
@@ -60,6 +63,7 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
+import { map } from "d3";
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -106,7 +110,7 @@ function getOcc(data) {
         { range: rangeHigh, category: "High" },
         { range: rangeVeryHigh, category: "Very High" },
     ];
-
+    occurenceLegend = occurenceCategories;
     let formattedData = [];
     Object.keys(dataByState).forEach(d => {
         let data = dataByState[d]
@@ -277,7 +281,7 @@ function getWeaponData (data) {
     
     let filteredData = filteredPieChartData(data)
     filteredData.forEach(d => {
-        console.log(d.weapon_source)
+        // console.log(d.weapon_source)
         if (d.weapon_source === 'family') {
             family += 1
         }
@@ -308,28 +312,15 @@ function getWeaponData (data) {
     ];
 }
 
-// let data = null; // Initialize data variable
-// d3.tsv('../../data/words.tsv')
-//   .then(function(loadedData) {
-//     // Assign loaded data to the variable
-//     data = loadedData;
-//     // Call display function once the data is loaded
-//     display(data);
-//   })
-//   .catch(function(error) {
-//     // Handle error if data loading fails
-//     console.error('Error loading data:', error);
-//   });
   
 let shootings = null;
+let occurenceLegend = null;
 let heatmaps = null;
 let deceasedPieData = null;
 let shootingPieData = null;
 let weaponPieData = null;
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
-    // Assign loaded data to the variable
-    // console.log(loadedData)
     const convertedData = loadedData.map(item => {
     // Convert 'year' property to a number, keep other properties unchanged
         return {
@@ -337,17 +328,12 @@ d3.csv('../../data/school-shootings.csv')
             year: !isNaN(item.year) ? +item.year : item.year
         };
     });
-    console.log(convertedData)
+    // console.log(convertedData)
     shootings = getOcc(loadedData);
+    console.log(occurenceLegend)
     heatmaps = getHeatMapData(convertedData)
-    // shootingPieData = getShootingData(loadedData)
-    // deceasedPieData = getDeceasedData(loadedData)
-    // weaponPieData = getWeaponData(loadedData)
 
     display(shootings)
-
-    // heatmaps = getHeatMapData(loadedData)
-    // display(heatmaps)
 
     deceasedPieData = getDeceasedData(loadedData)
     display(deceasedPieData)
@@ -397,9 +383,6 @@ function scrollVis(){
     var activeIndex = 0;
 
     // // Sizing for the grid visualization
-    // var squareSize = 6;
-    // var squarePad = 2;
-    // var numPerRow = width / (squareSize + squarePad);
 
     // main svg used for visualization
     var svg = null;
@@ -407,58 +390,6 @@ function scrollVis(){
     // d3 selection that will be used
     // for displaying visualizations
     var g = null;
-
-    // We will set the domain when the
-    // data is processed.
-    // @v4 using new scale names
-    // var xBarScale = d3.scaleLinear()
-    //     .range([0, width]);
-
-    // The bar chart display is horizontal
-    // so we can use an ordinal scale
-    // to get width and y locations.
-    // @v4 using new scale type
-    // var yBarScale = d3.scaleBand()
-    //     .paddingInner(0.08)
-    //     .domain([0, 1, 2])
-    //     .range([0, height - 50]);
-
-    // Color is determined just by the index of the bars
-    // var barColors = { 0: '#008080', 1: '#399785', 2: '#5AAF8C' };
-
-    // The histogram display shows the
-    // first 30 minutes of data
-    // so the range goes from 0 to 30
-    // @v4 using new scale name
-    // var xHistScale = d3.scaleLinear()
-    //     .domain([0, 30])
-    //     .range([0, width - 20]);
-
-    // @v4 using new scale name
-    // var yHistScale = d3.scaleLinear()
-    //     .range([height, 0]);
-
-    // The color translation uses this
-    // scale to convert the progress
-    // through the section into a
-    // color value.
-    // @v4 using new scale name
-    // var coughColorScale = d3.scaleLinear()
-    //     .domain([0, 1.0])
-    //     .range(['#008080', 'red']);
-
-    // You could probably get fancy and
-    // use just one axis, modifying the
-    // scale, but I will use two separate
-    // ones to keep things easy.
-    // @v4 using new axis name
-    // var xAxisBar = d3.axisBottom()
-    //     .scale(xBarScale);
-
-    // @v4 using new axis name
-    // var xAxisHist = d3.axisBottom()
-    //     .scale(xHistScale)
-    //     .tickFormat(function (d) { return d + ' min'; });
 
     // When scrolling to a new section
     // the activation function for that
@@ -480,83 +411,72 @@ function scrollVis(){
     var chart = function (selection) {
         selection.each(function () {
         
-        svg = d3.select('#vis')
-            .selectAll('svg')
-            .data([null]) 
-            .join('svg') 
-            .attr("viewBox", [0, 0, width, height])
-            .attr("width", width )
-            .attr("height", height );
+            svg = d3.select('#graphic #vis')
+                .selectAll('svg')
+                .data([null]) 
+                .join('svg') 
+                .attr("viewBox", [0, 0, width, height])
+                .attr("width", width )
+                .attr("height", height );
 
             svg.append('g');
 
-        // This group element will be used to contain all other elements.
-        g = svg.select('g')
-            .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
-        // perform some preprocessing on raw data
-        // var wordData = getWords([rawData]);
-        // filter to just include filler words
-        // var fillerWords = getFillerWords(wordData);
-
-        // get the counts of filler words for the
-        // bar chart display
-        // var fillerCounts = groupByWord(fillerWords);
-        // set the bar scale's domain
-        // var countMax = d3.max(fillerCounts, function (d) { return d.value;});
-        // xBarScale.domain([0, countMax]);
-
-
-            // get aggregated histogram data
-
-        // var histData = getHistogram(fillerWords);
-        // set histogram's domain
-        // var histMax = d3.max(histData, function (d) { return d.length; });
-        // yHistScale.domain([0, histMax]);
-        
-        setupVis();
-
+            // This group element will be used to contain all other elements.
+            g = svg.select('g')
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+            
+            setupVis();
             setupSections();
         });
     };
 
 
 
-    let count_g = null;
+    let map_text_g = null;
     let map_g = null;
+    let map_legend = null;
+    let map_legend_text1 = null;
+    let map_legend_text2 = null;
+    let heat_g = null;
     let deceased_pie_g = null;
     let shooting_pie_g = null;
     let weapon_pie_g = null;
-    
+    let rects = null;
+    let legend = null;
+    let xAxis_1999 = null;
+    let xAxis_2003 = null;
+
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
-    const color_cat = d3.scaleOrdinal(d3.schemePastel1)
-    const color_gradient = d3.scaleOrdinal(d3.schemeGreys[4]).domain(["Low", "Moderate", "High", "Very High"])
+    // const color_cat = d3.scaleOrdinal(d3.schemePastel1)
+    const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
     // for heatmap
     const color_event = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps.values1DArray)])
-    const color_occurence = d3.scaleOrdinal(d3.schemeGreys[4]).domain(["Low", "Moderate", "High", "Very High"])
+    const color_occurence = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
     /**
      * setupVis - creates initial elements for all
      * sections of the visualization.
-     *
-     * @param wordData - data object for each word.
-     * @param fillerCounts - nested data that includes
-     *  element for each filler word type.
-     * @param histData - binned histogram data
      */
     var setupVis = function () {
-        // // axis
-        // g.append('g')
-        // .attr('class', 'x axis')
-        // .attr('transform', 'translate(0,' + height + ')')
-        // .call(xAxisBar);
-        // g.select('.x.axis').style('opacity', 0);
-
+        
+        g.append('text')
+        .attr('class', 'title event-title')
+        .attr('x', width / 2)
+        .attr('y', height / 3)
+        .text('School Shootings')
+        .attr('font-size', '50px')
+        .attr('text-anchor', 'middle');
+        g.append('text')
+        .attr('class', 'sub-title event-title')
+        .attr('x', width / 2)
+        .attr('y', (height / 3) + (height / 5))
+        .text('Influenced by Columbine Shooting Event in the US');
+        g.selectAll('.openvis-title')
+        .attr('opacity', 0);
 
         // draw the map
         if (us) {
-            // Calculate the projection scale based on viewBox size and map data extent
-            
+            // let us_states = topojson.feature(us, us.objects.states).features
             let path = d3.geoPath()
             map_g = g.append("g")            
             .selectAll("path")
@@ -565,16 +485,10 @@ function scrollVis(){
             .attr("class", "county")
             .attr("d", path)
             .attr("stroke", "black")
-            .attr("fill",(d) => { 
-                if (valuemap.get(d.properties.name)) {
-                    return color_cat(valuemap.get(d.properties.name)) 
-                } else {
-                    return "white"
-                };
-            })
+            .attr("fill", "#E5E4E2")
 
             // Adding text labels
-            count_g = g.append("g")
+            map_text_g = g.append("g")
             .selectAll("text")
             .data(topojson.feature(us, us.objects.states).features)
             .enter().append("text")
@@ -585,35 +499,72 @@ function scrollVis(){
                     return ""};
                 }
             ) // Set the label to the state name
-            .attr('class', 'title openvis-title')
-            .attr("x", (d) => path.centroid(d)[0]) // X-coordinate of the label
-            .attr("y", (d) => path.centroid(d)[1]) // Y-coordinate of the label
-            .attr("text-anchor", "middle") // Center the text on the centroid
-            .attr("dy", "0.4em") // Adjust vertical position
-            .style("font-size", "10px") // Set the font size
-            .style("fill", "black"); // Set the text color
+            .attr("x", (d) => path.centroid(d)[0])
+            .attr("y", (d) => path.centroid(d)[1])
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.4em")
+            .style("font-size", "10px") 
+            .style("fill", "black");
+
+            // map_legend = g.append("g")
+            let legendElementWidth = 30
+            let legendHeight = 20      
+            map_legend = g.append("g")
+                        // .attr("transform", d => `translate(${width*0.7},0)` )
+            map_legend
+                        .attr("transform", d => `translate(${width*0.7},-${height*0.92})` )
+                        .selectAll("rect")
+                        .data(occurenceLegend)
+                        .enter()
+                        .append("rect")
+                        .attr("x", (d, i) => legendElementWidth * i)
+                        .attr("y", height - (2*legendHeight))
+                        .attr("width", legendElementWidth)
+                        .attr("height", legendHeight)
+                        .style("fill", d => color_occurence(d.category));
+            map_legend.append("g")
+                        .attr("transform", d => `translate(0,+${height*0.01})` )
+                        .selectAll("text")
+                        .data(occurenceLegend)
+                        .enter()
+                        .append("text")
+                        .text(d => parseInt(d.range[1]) )
+                        .attr("x", (d, i) => legendElementWidth * (i+1)-5)
+                        .attr("y", height - (legendHeight / 2)+5)
+                        // .style("font-size", "1rem")
+                        .style("fill", "#A4A4A4")
+                        .style('font-weight', 'bold')
+            map_legend.append("g")
+                        .attr("transform", d => `translate(0,+${height*0.01})` )
+                        .append("text")
+                        .text("1")
+                        .attr("x", -5)
+                        .attr("y", height - (legendHeight / 2)+5)
+                        // .style("font-size", "1rem")
+                        .style("fill", "#A4A4A4")
+                        .style('font-weight', 'bold')
         }
         if(heatmaps){
-           
+            heat_g = g.append("g")
             const rowHeight = 50;
             const RectsHeight = rowHeight * heatmaps.occurence.length + margin.top + margin.bottom;
             const x = d3.scaleLinear()
                 .domain([d3.min(heatmaps.years), d3.max(heatmaps.years) + 1])
-                .range([margin.left+35, width-margin.right-15])
+                .range([margin.left+15, width-margin.right-30])
             const y = d3.scaleBand()
                 .domain(heatmaps.occurence)
-                .rangeRound([height/2, height/2+RectsHeight - margin.bottom])
+                .rangeRound([height/3, height/3+RectsHeight - margin.bottom])
             
-            const x_axis = g.append("g")
+            const x_axis = heat_g.append("g")
                 .call(g => g.append("g")
-                    .attr("transform", `translate(0,${height/2})`)
+                    .attr("transform", `translate(0,${height/3})`)
                     .call(d3.axisTop(x).tickValues(heatmaps.years).ticks(null, "d"))
                     .call(g => g.select(".domain").remove()))
-            g.append("g")
-                .attr("transform", `translate(${margin.left+25},0)`)
+            const y_axis = heat_g.append("g")
+                .attr("transform", `translate(${margin.left+15},0)`)
                 .call(d3.axisLeft(y).tickSize(0))
                 .call(g => g.select(".domain").remove());
-            let rects = g.append("g")
+            rects = heat_g.append("g")
                 .selectAll("g")
                 .data(heatmaps.twoDArray)
                 .join("g")
@@ -625,34 +576,42 @@ function scrollVis(){
                     .attr("width", (d, i) => x(heatmaps.years[i] + 1) - x(heatmaps.years[i]) - 1)
                     .attr("height", y.bandwidth()-1)
                     .attr("fill", d => {return color_occurence(d.cat)})
-            
-        rects.transition()
-            .duration(5000)
-            .style("fill",(d,i)=> {return color_event(d.value)})
-                    
-        const xAxis = x_axis
-        .append("g")
-        .style("opacity",0)
-        .attr("transform", `translate(0,${height - margin.bottom*1.5})`)
-        .call(d3.axisBottom(x)
-                .tickValues([heatmaps.year])
-                .tickFormat(x => x)
-                .tickSize(-RectsHeight-margin.bottom))
-                .style("color","red")
-            .call(g => g.select(".tick text")
-                .attr("dy","1.5em")
-                .clone()
-                .attr("dy", "3em")
-                .style("font-weight", "bold")
-                .text("Columbine Event"))
-            .call(g => g.select(".domain").remove())
 
-        xAxis.transition()
-             .duration(8000)
-             .style("opacity",0.3)
                         
-                
-            
+            xAxis_1999 = x_axis
+            .append("g")
+            // .style("opacity",0)
+            .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            .call(d3.axisBottom(x)
+                    .tickValues([heatmaps.year])
+                    .tickFormat(x => x)
+                    .tickSize(-RectsHeight-margin.bottom))
+                    .style("color","red")
+                .call(g => g.select(".tick text")
+                    .attr("dy","1.5em")
+                    .clone()
+                    .attr("dy", "3em")
+                    .style("font-weight", "bold")
+                    .text("Columbine Event"))
+                .call(g => g.select(".domain").remove())
+            xAxis_2003 = x_axis
+            .append("g")
+            // .style("opacity",0)
+            .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            .call(d3.axisBottom(x)
+                    .tickValues([2003])
+                    .tickFormat(x => x)
+                    .tickSize(-RectsHeight-margin.bottom))
+                    .style("color","red")
+                .call(g => g.select(".tick text")
+                    .attr("dy","1.5em")
+                    .clone()
+                    .attr("dy", "3em")
+                    .style("font-weight", "bold")
+                    .text("Columbine Event"))
+                .call(g => g.select(".domain").remove())
+
+
 
             // legend
 
@@ -660,9 +619,9 @@ function scrollVis(){
             const legendHeight = 15;
             const numColorSteps = 100; 
 
-            const legend = g.append("g")
+            legend = heat_g.append("g")
                 .attr("class", "legend")
-                .attr("transform", `translate(${margin.left + 35}, ${height / 3})`);
+                .attr("transform", `translate(${margin.left + 5}, ${height / 5})`);
 
             const defs = legend.append("defs");
             const linearGradient = defs.append("linearGradient")
@@ -680,7 +639,7 @@ function scrollVis(){
                     .attr("stop-color", color_event(domainValues[0] + step * i));
             }
 
-            legend.append("rect")
+            let legend_rect = legend.append("rect")
                 .attr("x", 0)
                 .attr("y", 0)
                 .attr("width", legendWidth)
@@ -697,7 +656,7 @@ function scrollVis(){
 
             const lengendValPos = colorRange.map((value, index) => {
                 return {
-                    value: parseFloat(value.toFixed(1)),
+                    value: parseInt(value.toFixed(1)),
                     position: positionsInLegend[index]
                 };
             });
@@ -710,7 +669,7 @@ function scrollVis(){
                 .attr("y1", -3)
                 .attr("x2", d => (d.position))
                 .attr("y2", legendHeight+3)
-                .style("stroke", "black")
+                .style("stroke", "#A4A4A4")
                 .style("stroke-width", 1);
 
             legend.selectAll("text")
@@ -718,54 +677,27 @@ function scrollVis(){
                 .enter().append("text")
                 .attr("x", d => (d.position-5))
                 .attr("y", legendHeight + 20)
-                .text(d => (d.value));
-
-
-
-
+                .text(d => (d.value))
+                .style("fill", "#A4A4A4")
+                .style('font-weight', 'bold');
         }
-
-
-        
-        // count openvis title
-        g.append('text')
-        .attr('class', 'title openvis-title')
-        .attr('x', width / 2)
-        .attr('y', height / 3)
-        .text('School Shootings')
-        .attr('font-size', '50px')
-        .attr('text-anchor', 'middle');
-        g.append('text')
-        .attr('class', 'sub-title openvis-title')
-        .attr('x', width / 2)
-        .attr('y', (height / 3) + (height / 5))
-        .text('Influenced by Columbine Shooting Event in the US');
-        
-
         if (map_g) {
             map_g.attr('opacity', 0);
+            map_text_g.attr('opacity', 0);
+            map_legend.attr('opacity', 0);
+            // map_legend_text1.attr('opacity', 0);
+            // map_legend_text2.attr('opacity', 0);
+            // d3.select("#intro").style("opacity", 0);
         }
-
-        if (count_g) {
-            count_g.attr('opacity', 0);
+        if (map_text_g) {
+            map_text_g.attr('opacity', 0);
+            legend.attr('opacity', 0);
+            xAxis_1999.attr('opacity', 0);
+            xAxis_2003.attr('opacity', 0);
         }
-        
-
-        // count filler word count title
-        // g.append('text')
-        // .attr('class', 'title count-title highlight')
-        // .attr('x', width / 2)
-        // .attr('y', height / 3)
-        // .text('180');
-
-        // g.append('text')
-        // .attr('class', 'sub-title count-title')
-        // .attr('x', width / 2)
-        // .attr('y', (height / 3) + (height / 5))
-        // .text('Filler Words');
-
-
-
+        if(heat_g){
+            heat_g.attr('opacity', 0);
+        }
         // pie chart
         var deceasedColor = d3.scaleOrdinal(['#fff0f0', '#cbcbcb', '#ffaeb5', '#e1e1ff']);
         var shootingColor = d3.scaleOrdinal(['#d8e2dc', '#ffe5d9', '#ffcad4', '#f4acb7']);
@@ -885,61 +817,7 @@ function scrollVis(){
             weapon_pie_g.attr('opacity', 0);
         }
 
-        // square grid
-        // @v4 Using .merge here to ensure
-        // new and old data have same attrs applied
-        // var squares = g.selectAll('.square').data(wordData, function (d) { return d.word; });
-        // var squaresE = squares.enter()
-        // .append('rect')
-        // .classed('square', true);
-        // squares = squares.merge(squaresE)
-        // .attr('width', squareSize)
-        // .attr('height', squareSize)
-        // .attr('fill', '#fff')
-        // .classed('fill-square', function (d) { return d.filler; })
-        // .attr('x', function (d) { return d.x;})
-        // .attr('y', function (d) { return d.y;})
-        // .attr('opacity', 0);
 
-        // barchart
-        // @v4 Using .merge here to ensure
-        // new and old data have same attrs applied
-        // var bars = g.selectAll('.bar').data(fillerCounts);
-        // var barsE = bars.enter()
-        // .append('rect')
-        // .attr('class', 'bar');
-        // bars = bars.merge(barsE)
-        // .attr('x', 0)
-        // .attr('y', function (d, i) { return yBarScale(i);})
-        // .attr('fill', function (d, i) { return barColors[i]; })
-        // .attr('width', 0)
-        // .attr('height', yBarScale.bandwidth());
-
-        // var barText = g.selectAll('.bar-text').data(fillerCounts);
-        // barText.enter()
-        // .append('text')
-        // .attr('class', 'bar-text')
-        // .text(function (d) { return d.key + '…'; })
-        // .attr('x', 0)
-        // .attr('dx', 15)
-        // .attr('y', function (d, i) { return yBarScale(i);})
-        // .attr('dy', yBarScale.bandwidth() / 1.2)
-        // .style('font-size', '110px')
-        // .attr('fill', 'white')
-        // .attr('opacity', 0);
-
-        // histogram
-        // @v4 Using .merge here to ensure
-        // new and old data have same attrs applied
-        // var hist = g.selectAll('.hist').data(histData);
-        // var histE = hist.enter().append('rect')
-        // .attr('class', 'hist');
-        // hist = hist.merge(histE).attr('x', function (d) { return xHistScale(d.x0); })
-        // .attr('y', height)
-        // .attr('height', 0)
-        // .attr('width', xHistScale(histData[0].x1) - xHistScale(histData[0].x0) - 1)
-        // .attr('fill', barColors[0])
-        // .attr('opacity', 0);
 
 
     };
@@ -955,14 +833,10 @@ function scrollVis(){
         // activateFunctions are called each
         // time the active section changes
         activateFunctions[0] = showTitle;
-        activateFunctions[1] = showFillerTitle;
-        activateFunctions[2] = showGrid;
-        activateFunctions[3] = highlightGrid;
-        activateFunctions[4] = showBar;
-        activateFunctions[5] = showHistPart;
-        activateFunctions[6] = showHistAll;
-        activateFunctions[7] = showCough;
-        activateFunctions[8] = showPie;
+        activateFunctions[1] = showMap;
+        activateFunctions[2] = showMapGradient;
+        activateFunctions[3] = showHeat;
+        activateFunctions[4] = showPie;
 
         // updateFunctions are called while
         // in a particular section to update
@@ -973,151 +847,176 @@ function scrollVis(){
         for (var i = 0; i < 9; i++) {
             updateFunctions[i] = function () {};
         }
-        updateFunctions[7] = updateCough;
+        // updateFunctions[7] = updateCough;
     };
 
     /**
      * ACTIVATE FUNCTIONS
-     *
-     * These will be called their
-     * section is scrolled to.
-     *
-     * General pattern is to ensure
-     * all content for the current section
-     * is transitioned in, while hiding
-     * the content for the previous section
-     * as well as the next section (as the
-     * user may be scrolling up or down).
-     *
      */
+     function showTitle() {
+        g.selectAll('.event-title')
+        .transition()
+        .duration(0)
+        .attr('opacity', 1);
 
+        // d3.select("#intro").attr("opacity", 0);
+        hideMap();
+        hideMaptext();
+        hideHeat();
+    }
     /**
-     * showTitle - initial title
+     * showIntro - show introduction
      *
-     * hides: count title
-     * (no previous step to hide)
+     * hides: Topic title
      * shows: intro title
      *
      */
-    function showTitle() {
-        g.selectAll('.count-title')
+    function showIntro(){
+
+    }
+    /**
+     * showMap - draw the map
+     *
+     * hides: Topic title
+     * shows: map highlight CO
+     *
+     */    
+    function showMap() {
+        g.selectAll('.event-title')
         .transition()
         .duration(0)
         .attr('opacity', 0);
 
-        // g.selectAll('.openvis-title')
         if (map_g) {
-            map_g
-            .transition()
-            .duration(600)
-            .attr('opacity', 1.0)
-            .style("fill",(d) => { 
-                if (valuemap.get(d.properties.name)) {
-                    return color_cat(valuemap.get(d.properties.name)) 
-                } else {
-                    return "white"
-                };
-            })
-        }
-
-        if (count_g) {
-            count_g
-            .transition()
-            .duration(600)
-            .attr('opacity', 1.0)
-        }
-
-        hidePie();
-    }
-
-    /**
-     * showFillerTitle - filler counts
-     *
-     * hides: intro title
-     * hides: square grid
-     * shows: filler count title
-     *
-     */
-    function showFillerTitle() {
-        // g.selectAll('.openvis-title .county')
-        if (map_g) {
-            map_g
-            .transition()
-            .duration(1000)
-            // .attr('opacity', 0);
+            // d3.select("#intro")
             // .transition()
-            .style("fill",(d) => {
-                if(valuemap.get(d.properties.name)) {
-                    return color_gradient(valuemap.get(d.properties.name)) 
-                } else {
-                    return "white"
-                };
-            })
+            // .duration(1000)
+            // .style("opacity", 1);
+            map_g
             .transition()
+            .duration(600)
+            .attr('opacity', 1.0)
+            // .style("fill", "#fcfcfc")
+            // .style("fill",(d) => { 
+            //     if (valuemap.get(d.properties.name)) {
+            //         return color_cat(valuemap.get(d.properties.name)) 
+            //     } else {
+            //         return "white"
+            //     };
+            // })
+            .transition(1000)
             .style("fill",(d) => {
                 if (d.properties.name == "Colorado") {
-                    return ("#773737");
+                    return ("#fb6a4a");
                 } else {
-                    if(valuemap.get(d.properties.name)){
-                        return color_gradient(valuemap.get(d.properties.name)) 
-                    } else {
-                        return "white"
-                    };
+                    return ("#E5E4E2");
                 }
             })
         }
 
-        g.selectAll('.square')
-        .transition()
-        .duration(0)
-        .attr('opacity', 0);
+        if (map_text_g) {
+            map_text_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0)
+        }
 
-        g.selectAll('.count-title')
-        .transition()
-        .duration(600)
-        .attr('opacity', 1.0);
+        hidePie();
+        hideHeat();
+    }
 
-
-        if (count_g) {
-            count_g
+    /**
+     * showMapGradient
+     *
+     * hides: intro, map, heatmap, pie
+     * shows: map with gradient, states text
+     *
+     */
+    function showMapGradient() {
+        hideHeat();
+        hidePie();
+        if (map_g) {
+            map_g
+            .transition()
+            .style("fill",(d) => {
+                if(valuemap.get(d.properties.name)) {
+                    return color_gradient(valuemap.get(d.properties.name)) 
+                } else {
+                    return "#E5E4E2"
+                };
+            })
+            // .transition()
+            // .style("fill",(d) => {
+            //     if (d.properties.name == "Colorado") {
+            //         return ("#773737");
+            //     } else {
+            //         if(valuemap.get(d.properties.name)){
+            //             return color_gradient(valuemap.get(d.properties.name)) 
+            //         } else {
+            //             return "white"
+            //         };
+            //     }
+            // })
+        }
+        if (map_text_g) {
+            map_text_g
             .transition()
             .duration(0)
             .attr('opacity', 1.0);
         }
-        hidePie();
+        if (map_legend) {
+            map_legend
+            .transition()
+            .duration(0)
+            .attr('opacity', 1.0);
+        }        
+
     }
 
     /**
-     * showGrid - square grid
+     * showHeat - heatmap transition from gray to sequential
      *
-     * hides: filler count title
-     * hides: filler highlight in grid
-     * shows: square grid
+     * hides: intro, map, map_gradient, states text, pie
+     * shows: heat map
      *
      */
-    function showGrid() {
-        hideCounty();
+    function showHeat() {
+        hideMap();
+        hideMaptext();
         hidePie();
         
-        map_g
-        .transition()
-        .duration(0)
-        .attr('opacity', 0); 
-        
+        if (heat_g) {
+            heat_g
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1.0);
 
-        g.selectAll('.count-title')
-        .transition()
-        .duration(0)
-        .attr('opacity', 0);
+            legend
+            .transition()
+            .duration(2000)
+            .attr('opacity', 1.0);
+                            
+            rects.transition()
+                .duration(2000)
+                .attr('opacity', 1.0)
+                .style("fill",(d,i)=> {return color_event(d.value)})
 
-        g.selectAll('.square')
-        .transition()
-        .duration(600)
-        .delay(function (d) {
-            return 5 * d.row;
-        })
-        .attr('opacity', 1.0)
-        .attr('fill', '#ddd');
+            xAxis_1999.transition()
+                .duration(2000)
+                .attr("opacity",0.6)
+            xAxis_2003.transition()
+                .duration(4000)
+                .attr("opacity",0.6)
+        }
+
+        // g.selectAll('.square')
+        // .transition()
+        // .duration(600)
+        // .delay(function (d) {
+        //     return 5 * d.row;
+        // })
+        // .attr('opacity', 1.0)
+        // .attr('fill', '#ddd');
     }
 
     /**
@@ -1129,9 +1028,9 @@ function scrollVis(){
      *  are moved back to their place in the grid
      */
     function highlightGrid() {
-        hideAxis();
-        hidePie();
-        hideCounty();
+
+        hideHeat();
+        hideMaptext();
 
         g.selectAll('.bar .pie')
         .transition()
@@ -1180,9 +1079,9 @@ function scrollVis(){
      */
     function showBar() {
         // ensure bar axis is set
-        hideAxis();
-        hidePie();
-        hideCounty();
+
+        hideHeat();
+        hideMaptext();
 
         g.selectAll('.square')
         .transition()
@@ -1231,9 +1130,10 @@ function scrollVis(){
      */
     function showHistPart() {
         // switch the axis to histogram one
-        hideAxis();
+        // hideAxis();
         hidePie();
-        hideCounty();
+        hideHeat();
+        hideMaptext();
 
         g.selectAll('.bar-text')
         .transition()
@@ -1267,9 +1167,10 @@ function scrollVis(){
      */
     function showHistAll() {
         // ensure the axis to histogram one
-        hideAxis();
+        // hideAxis();
         hidePie();
-        hideCounty();
+        hideHeat();
+        hideMaptext();
 
         g.selectAll('.cough')
         .transition()
@@ -1292,6 +1193,11 @@ function scrollVis(){
     }
 
     function showPie() {
+        
+        // hideMap();
+        // hideMaptext();
+        // hideHeat();
+        
         // ensure the axis to histogram one
         if (deceased_pie_g) {
             deceased_pie_g
@@ -1312,24 +1218,24 @@ function scrollVis(){
             .attr('opacity', 1.0);
         }
 
-        g.selectAll('.cough')
-        .transition()
-        .duration(0)
-        .attr('opacity', 0);
+        // g.selectAll('.cough')
+        // .transition()
+        // .duration(0)
+        // .attr('opacity', 0);
 
-        // named transition to ensure
-        // color change is not clobbered
-        g.selectAll('.hist')
-        .transition('color')
-        .duration(500)
-        .style('fill', '#008080');
+        // // named transition to ensure
+        // // color change is not clobbered
+        // g.selectAll('.hist')
+        // .transition('color')
+        // .duration(500)
+        // .style('fill', '#008080');
 
-        g.selectAll('.hist')
-        .transition()
-        .duration(1200)
-        .attr('y', function (d) { return yHistScale(d.length); })
-        .attr('height', function (d) { return height - yHistScale(d.length); })
-        .style('opacity', 1.0);
+        // g.selectAll('.hist')
+        // .transition()
+        // .duration(1200)
+        // .attr('y', function (d) { return yHistScale(d.length); })
+        // .attr('height', function (d) { return height - yHistScale(d.length); })
+        // .style('opacity', 1.0);
     }
 
     /**
@@ -1343,8 +1249,9 @@ function scrollVis(){
      */
     function showCough() {
         // ensure the axis to histogram one
-        hideAxis();
+        // hideAxis();
         hidePie();
+        hideHeat();
 
         g.selectAll('.hist')
         .transition()
@@ -1354,30 +1261,46 @@ function scrollVis(){
         .style('opacity', 1.0);
 
     }
-
-    /**
-     * showAxis - helper function to
-     * display particular xAxis
-     *
-     * @param axis - the axis to show
-     *  (xAxisHist or xAxisBar)
-     */
-    function showAxis(axis) {
-        g.select('.x.axis')
-        .call(axis)
-        .transition().duration(500)
-        .style('opacity', 1);
+    function hideMap() {
+        if (map_g) {
+            map_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+        if(map_legend){
+            map_legend
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+        }
+            
+        }
     }
 
-    /**
-     * hideAxis - helper function
-     * to hide the axis
-     *
-     */
-    function hideAxis() {
-        g.select('.x.axis')
-        .transition().duration(500)
-        .style('opacity', 0);
+    function hideHeat() {
+        if (heat_g) {
+            heat_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+            legend
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+            rects
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);  
+            xAxis_1999
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+            xAxis_2003
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);          
+        }
+
     }
 
     function hidePie() {
@@ -1401,11 +1324,11 @@ function scrollVis(){
         }
     }
 
-    function hideCounty() {
-        if (count_g) {
-            count_g
+    function hideMaptext() {
+        if (map_text_g) {
+            map_text_g
             .transition()
-            .duration(600)
+            .duration(0)
             .attr('opacity', 0)
         }
     }
@@ -1431,6 +1354,8 @@ function scrollVis(){
      */
     function updateCough(progress) {
         hidePie();
+        
+        hideHeat();
         g.selectAll('.cough')
         .transition()
         .duration(0)
@@ -1444,91 +1369,8 @@ function scrollVis(){
         });
     }
 
-    /**
-     * DATA FUNCTIONS
-     *
-     * Used to coerce the data into the
-     * formats we need to visualize
-     *
-     */
 
-    /**
-     * getWords - maps raw data to
-     * array of data objects. There is
-     * one data object for each word in the speach
-     * data.
-     *
-     * This function converts some attributes into
-     * numbers and adds attributes used in the visualization
-     *
-     * @param rawData - data read in from file
-     */
-    function getWords(rawData) {
-        return rawData.map(function (d, i) {
-        // is this word a filler word?
-        d.filler = (d.filler === '1') ? true : false;
-        // time in seconds word was spoken
-        d.time = +d.time;
-        // time in minutes word was spoken
-        d.min = Math.floor(d.time / 60);
-
-        // positioning for square visual
-        // stored here to make it easier
-        // to keep track of.
-        d.col = i % numPerRow;
-        d.x = d.col * (squareSize + squarePad);
-        d.row = Math.floor(i / numPerRow);
-        d.y = d.row * (squareSize + squarePad);
-        return d;
-        });
-    }
-
-    /**
-     * getFillerWords - returns array of
-     * only filler words
-     *
-     * @param data - word data from getWords
-     */
-    function getFillerWords(data) {
-        return data.filter(function (d) {return d.filler; });
-    }
-
-    /**
-     * getHistogram - use d3's histogram layout
-     * to generate histogram bins for our word data
-     *
-     * @param data - word data. we use filler words
-     *  from getFillerWords
-     */
-    function getHistogram(data) {
-        // only get words from the first 30 minutes
-        var thirtyMins = data.filter(function (d) { return d.min < 30; });
-        // bin data into 2 minutes chuncks
-        // from 0 - 31 minutes
-        // @v4 The d3.histogram() produces a significantly different
-        // data structure then the old d3.layout.histogram().
-        // Take a look at this block:
-        // https://bl.ocks.org/mbostock/3048450
-        // to inform how you use it. Its different!
-        return d3.histogram()
-        .thresholds(xHistScale.ticks(10))
-        .value(function (d) { return d.min; })(thirtyMins);
-    }
-    
-    /**
-    * groupByWord - group words together
-    * using nest. Used to get counts for
-    * barcharts.
-    *
-    * @param words
-    */
-    function groupByWord(words) {
-        return nest()
-        .key(function (d) { return d.word; })
-        .rollup(function (v) { return v.length; })
-        .entries(words)
-        .sort(function (a, b) {return b.value - a.value;});
-    }
+   
 
     /**
     * activate -
@@ -1540,7 +1382,7 @@ function scrollVis(){
         var sign = (activeIndex - lastIndex) < 0 ? -1 : 1;
         var scrolledSections = d3.range(lastIndex + sign, activeIndex + sign, sign);
         scrolledSections.forEach(function (i) {
-        activateFunctions[i]();
+            activateFunctions[i]();
         });
         lastIndex = activeIndex;
     };
@@ -1602,32 +1444,39 @@ function display(data) {
 
 </script>
 <style scoped>
-/* .container {
-  width: 890px;
-} */
 
 #graphic {
-  padding-top: 60px;
+  width: 100%;
 }
 
 
 #sections {
   position: relative;
   display: inline-block;
-  width: 300px;
-  top: 0px;
+  width: 270px;
   z-index: 90;
-  padding-bottom: 200px;
+  padding-bottom: 300px; 
+  /* add space for the last section */
 }
-
+#vis {
+  display: inline-block;
+  position: fixed;
+  z-index: 1;
+  /* margin-right: 10px; */
+  /* flex:5; */
+}
 .step {
-  margin-bottom: 200px;
+  margin-bottom: 300px;
   font-family: "TiemposTextWeb-Regular","Georgia";
   font-size: 16px;
   line-height: 23px;
   color: #767678;
+  text-align: justify;
+  padding:10px;
 }
-
+.boarder{
+  border-style: groove;
+}
 #sections .title {
   font-family: Arial,Helvetica,"san-serif";
   font-size: 16px;
@@ -1635,28 +1484,27 @@ function display(data) {
   margin-bottom: 2px;
   color: #262626;
   line-height: 1.2em;
+
 }
 
-#extra-space {
-  height: 300px;
-}
-
-#vis {
-  display: inline-block;
-  position: fixed;
-  top: 60px;
-  z-index: 1;
-  margin-left: 0;
-  /* height: 600px; */
-  width: 100%;
-  /* background-color: red; */
-}
-
-#vis title {
-  font-size:120px;
-  text-anchor: middle;
-}
-
+.low{
+    color: black;
+    background-color: #fee5d9;
+    opacity:1.0;
+  }
+  .medium {
+    color: black;
+    background: #fcae91;
+  }
+  .high {
+    color: black;
+    background: #fb6a4a;
+  }
+  .very_high{
+    color: black;
+    background: #cb181d; 
+  }
+/* 
 #vis .sub-title {
   font-size:80px;
   text-anchor: middle;
@@ -1678,7 +1526,7 @@ function display(data) {
   stroke: #000;
   stroke-width: 4px;
 
-}
+} */
 
 
 
