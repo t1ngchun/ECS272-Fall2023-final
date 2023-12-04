@@ -64,7 +64,9 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
-import { map, sort } from "d3";
+
+import { line, map, sort } from "d3";
+
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -193,6 +195,7 @@ function getHeatMapData(data) {
         year: 1999
     };
 }
+
 function getHeatMapData_state(data) {
     const years = [...new Set(data.map(item => item.year))]
     const states = [...new Set(data.map(item => item.state))]
@@ -277,6 +280,7 @@ function getHeatMapData_state(data) {
     };
 }
 // for pie chart
+
 function filteredPieChartData(data) {
     let formattedData = [];
     Object.keys(data).forEach(d => {
@@ -287,7 +291,7 @@ function filteredPieChartData(data) {
             killed: value.killed,
             injured: value.injured,
             casualties: value.casualties,
-            age_shooter: value.age_shooter1,
+            age_shooter: parseInt(value.age_shooter1),
             shooting_type: filterShootingType(value.shooting_type),
             shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
             weapon_source: filterWeaponSource(value.weapon_source),
@@ -298,6 +302,18 @@ function filteredPieChartData(data) {
     });
     return formattedData;
 }
+// for line chart
+function getShooterAgeData(data) {
+    let filteredData = filteredPieChartData(data)
+  let yearsData = groupBy(filteredData, 'year')
+  const averageAges = Object.entries(yearsData).map(([year, data]) => {
+    const totalAge = data.reduce((sum, obj) => obj.age_shooter ? sum + obj.age_shooter : sum, 0);
+    const averageAge = totalAge / data.length || 0; // To avoid division by zero
+    return { year: parseInt(year), age: Math.round(averageAge) };
+  });
+  return averageAges;
+}
+// for pie chart
 function getDeceasedData(data) {
     let alive = 0
     let suicide = 0
@@ -405,6 +421,9 @@ let heatmaps_state = null;
 let deceasedPieData = null;
 let shootingPieData = null;
 let weaponPieData = null;
+let lineChartData = null;
+let ageLine = null;
+
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
     convertedData = loadedData.map(item => {
@@ -419,11 +438,16 @@ d3.csv('../../data/school-shootings.csv')
     console.log(convertedData)
     shootings = getOcc(loadedData);
     heatmaps = getHeatMapData(convertedData)
+
     heatmaps_state = getHeatMapData_state(convertedData)
     display(convertedData)
+
     display(shootings)
     display(heatmaps)
     display(heatmaps_state)
+
+    lineChartData = getShooterAgeData(loadedData)
+    display(lineChartData)
 
     deceasedPieData = getDeceasedData(loadedData)
     display(deceasedPieData)
@@ -541,6 +565,7 @@ function scrollVis(){
     let legend = null;
     let xAxis_1999 = null;
     let xAxis_2003 = null;
+    let line_g = null;
 
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
@@ -555,6 +580,15 @@ function scrollVis(){
      * setupVis - creates initial elements for all
      * sections of the visualization.
      */
+    function transition(path) {
+        var totalLength = path.node().getTotalLength();
+        path.attr("stroke-dasharray", totalLength)
+            .attr("stroke-dashoffset", totalLength)
+            .transition()
+            .duration(2000)
+            .attr("stroke-dashoffset", 0);
+    }
+
     var setupVis = function () {
         
         g.append('text')
@@ -564,6 +598,7 @@ function scrollVis(){
         .text('School Shootings')
         .attr('font-size', '50px')
         .attr('text-anchor', 'middle');
+
         g.append('text')
         .attr('class', 'sub-title event-title')
         .attr('x', width / 2)
@@ -917,13 +952,78 @@ function scrollVis(){
         if(heat_g){
             heat_g.attr('opacity', 0);
         }
+
         if(heat_state_g){
             heat_state_g.attr('opacity', 0);
         }
+
+
+        // line chart
+        
+        if (lineChartData) {
+            const x = d3.scaleLinear()
+                .domain(d3.extent(lineChartData, d => d.year))
+                .range([margin.left+50, width - margin.right-50]);
+            
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(lineChartData, d => d.age)])
+                .range([height - margin.top, margin.bottom]);
+            
+            // Define the line function
+            const line = d3.line()
+                .x(d => x(d.year))
+                .y(d => y(d.age));
+
+            line_g = g.append("g")
+            
+            // Draw the line
+            ageLine = line_g.append("path")
+                .datum(lineChartData)
+                .attr("fill", "none")
+                .attr("stroke", "steelblue")
+                .attr("stroke-width", 1)
+                .attr("d", line)
+                .attr('class', 'age-line')
+                // .call(transition);
+
+            // Add x-axis
+            line_g.append("g")
+                .attr("transform", `translate(0, ${height - margin.bottom})`)
+                .call(d3.axisBottom(x).ticks(28).tickFormat(d => d.toString()))
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .style("font-size", 10)
+                .attr("dx", "-.8em")
+                .attr("dy", "1em")
+                .attr("transform", `rotate(-35)`);
+            
+            // Add y-axis
+            line_g.append("g")
+                .attr("transform",  `translate(${margin.left+50}, ${- margin.bottom})`)
+                .call(d3.axisLeft(y))
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .style("font-size", 10)
+            
+            // Add labels
+            line_g.append("text")
+                .attr("transform", `rotate(-90)`)
+                .attr("x", -200)
+                .attr("y", margin.top + 25)
+                .style("font-size", 15)
+                .text("Age");
+        }
+
+        if (line_g) {
+            line_g.attr('opacity', 0)
+        }
+
+
+
         // pie chart
-        var deceasedColor = d3.scaleOrdinal(['#fff0f0', '#cbcbcb', '#ffaeb5', '#e1e1ff']);
-        var shootingColor = d3.scaleOrdinal(['#d8e2dc', '#ffe5d9', '#ffcad4', '#f4acb7']);
-        var weaponColor = d3.scaleOrdinal(['#ff99c8', '#fec8c3', '#fcf6bd', '#d0f4de', '#a9def9', '#c7ceea']);
+        var deceasedColor = d3.scaleOrdinal(['#d8e2dc', '#d8e2dc', '#ffcad4', '#cbcbcb']);
+        var shootingColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#cbcbcb']);
+        var weaponColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#cbcbcb']);
 
         if (deceasedPieData) {
             var pie = d3.pie()
@@ -957,6 +1057,16 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => deceasedPieData[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] + "," + c[1] + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
@@ -993,6 +1103,16 @@ function scrollVis(){
                 .text((d, i) => shootingPieData[i].name)
                 .style("font-size", 10)
                 .attr("fill", "black");
+
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] + "," + c[1] + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
+                .style("font-size", 10)
+                .attr("fill", "black");
         }
         if (weaponPieData) {
             var pie = d3.pie()
@@ -1025,6 +1145,16 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => weaponPieData[i].name)
+                .style("font-size", 10)
+                .attr("fill", "black");
+
+            arcs.append("text")
+                .attr("transform", d => {
+                var c = arc.centroid(d);
+                return "translate("  + c[0] + "," + c[1] + ")";
+                })
+                .attr("text-anchor", "middle")
+                .text((d, i) => `${-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
@@ -1060,7 +1190,9 @@ function scrollVis(){
         activateFunctions[3] = showMapGradient;
         activateFunctions[4] = showHeat;
         activateFunctions[5] = showHeatState;
-        activateFunctions[6] = showPie;
+        activateFunctions[6] = showLine;
+        activateFunctions[7] = showPie;
+
 
         // updateFunctions are called while
         // in a particular section to update
@@ -1169,6 +1301,7 @@ function scrollVis(){
     function showMapGradient() {
         hideHeat();
         hidePie();
+        hideLine();
         if (map_g) {
             map_g
             .transition()
@@ -1219,6 +1352,7 @@ function scrollVis(){
         hideMaptext();
         hidePie();
         hideHeatState();
+        hideLine();
 
         if (heat_g) {
             heat_g
@@ -1299,9 +1433,10 @@ function scrollVis(){
      *  are moved back to their place in the grid
      */
     function highlightGrid() {
-
         hideHeat();
         hideMaptext();
+        hidePie();
+        hideLine();
 
         g.selectAll('.bar .pie')
         .transition()
@@ -1353,6 +1488,8 @@ function scrollVis(){
 
         hideHeat();
         hideMaptext();
+        hidePie();
+        hideLine();
 
         g.selectAll('.square')
         .transition()
@@ -1405,6 +1542,7 @@ function scrollVis(){
         hidePie();
         hideHeat();
         hideMaptext();
+        hideLine();
 
         g.selectAll('.bar-text')
         .transition()
@@ -1442,6 +1580,7 @@ function scrollVis(){
         hidePie();
         hideHeat();
         hideMaptext();
+        hideLine();
 
         g.selectAll('.cough')
         .transition()
@@ -1468,6 +1607,7 @@ function scrollVis(){
         // hideMap();
         // hideMaptext();
         // hideHeat();
+        hideLine();
         
         // ensure the axis to histogram one
         if (deceased_pie_g) {
@@ -1509,6 +1649,54 @@ function scrollVis(){
         // .style('opacity', 1.0);
     }
 
+    function showLine() {
+        
+        // hideMap();
+        // hideMaptext();
+        hideHeat();
+        hidePie();
+        
+        // ensure the axis to histogram one
+        if (line_g) {
+            line_g
+            .transition()
+            .duration(600)
+            .attr('opacity', 1.0);
+
+            ageLine.call(transition);
+
+
+            // line_g.append("path")
+            //     .datum(lineChartData)
+            //     .attr("fill", "none")
+            //     .attr("stroke", "steelblue")
+            //     .attr("stroke-width", 1)
+            //     .attr("d", line)
+            //     .attr('class', 'age-line')
+            //     .call(transition);
+            
+        }
+
+        // g.selectAll('.cough')
+        // .transition()
+        // .duration(0)
+        // .attr('opacity', 0);
+
+        // // named transition to ensure
+        // // color change is not clobbered
+        // g.selectAll('.hist')
+        // .transition('color')
+        // .duration(500)
+        // .style('fill', '#008080');
+
+        // g.selectAll('.hist')
+        // .transition()
+        // .duration(1200)
+        // .attr('y', function (d) { return yHistScale(d.length); })
+        // .attr('height', function (d) { return height - yHistScale(d.length); })
+        // .style('opacity', 1.0);
+    }
+
     /**
      * showCough
      *
@@ -1523,6 +1711,7 @@ function scrollVis(){
         // hideAxis();
         hidePie();
         hideHeat();
+        hideLine();
 
         g.selectAll('.hist')
         .transition()
@@ -1615,6 +1804,15 @@ function scrollVis(){
             .transition()
             .duration(0)
             .attr('opacity', 0)
+        }
+    }
+
+    function hideLine() {
+        if(line_g){
+            line_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
         }
     }
 
