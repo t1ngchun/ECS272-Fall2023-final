@@ -19,9 +19,8 @@
                 <div class="title">The Columbine Shooting Event triggers a lots of school shooting events.</div>
             </section>
             <section class="step boarder">
-                <div class="title">We divide the states in the US into four regions acording to the frequency of events occurence.</div>
-                The map is the overview of the total count of the shooting events in each region from 1999 to 2023 with the four regions (<span class="low"> Low </span>,<span class="medium"> Moderate </span>,<span class="high"> High </span> 
-                and<span class="very_high"> Very High </span>).
+                <div class="title">We focus on the states which has high frequency of events occurence (event number > 11).</div>
+                From 1999 to 2023 we found out that California (40), Texas (25), Florida (24), and North Carolina (21).
             </section>
             <section class="step boarder">
                 <div class="title">Heat Map</div>
@@ -64,8 +63,9 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
-
-import { line, map, sort } from "d3";
+import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie} from "./hidecomponent"
+import { line, map, pie, sort } from "d3";
+import { h } from "vue";
 
 
 function convertRegion(input)  {
@@ -437,6 +437,7 @@ d3.csv('../../data/school-shootings.csv')
     });
     console.log(convertedData)
     shootings = getOcc(loadedData);
+    console.log(shootings)
     heatmaps = getHeatMapData(convertedData)
 
     heatmaps_state = getHeatMapData_state(convertedData)
@@ -551,16 +552,14 @@ function scrollVis(){
     };
 
 
-
+    let map_count_g = null;
     let map_text_g = null;
     let map_g = null;
-    let map_legend = null;
-    let heat_g = null;
+    let circle_g = null;
     let heat_state_g = null;
     let deceased_pie_g = null;
     let shooting_pie_g = null;
     let weapon_pie_g = null;
-    let rects = null;
     let heat_rects = null;
     let legend = null;
     let xAxis_1999 = null;
@@ -569,10 +568,12 @@ function scrollVis(){
 
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
+    const countmap = new Map(shootings?.map(d => [d.name, d.value]));
+    console.log(countmap)
     // const color_cat = d3.scaleOrdinal(d3.schemePastel1)
     const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
     // for heatmap
-    const color_event = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps.values1DArray)])
+    // const color_event = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps.values1DArray)])
     // const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
     // for each state heatmap
     const color_state = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps_state.values1DArray)])
@@ -621,7 +622,7 @@ function scrollVis(){
             .attr("fill", "#E5E4E2")
             let projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305]);
             // Adding circles
-            g.append("g")            
+            circle_g = g.append("g")            
             .selectAll("circle")
             .data(convertedData.filter(d=>d.long!=0 && d.lat!=0))
             .enter()
@@ -632,7 +633,7 @@ function scrollVis(){
             .attr("cy", d => {
                 return projection([d.long,d.lat])[1];
             })
-            .attr("r", 2)
+            .attr("r", 3)
             .attr("fill", "red"); 
             // Adding text labels
             map_text_g = g.append("g")
@@ -652,183 +653,72 @@ function scrollVis(){
             .attr("dy", "0.4em")
             .style("font-size", "10px") 
             .style("fill", "black");
-
-            let legendElementWidth = 30
-            let legendHeight = 20      
-            map_legend = g.append("g")
-                        // .attr("transform", d => `translate(${width*0.7},0)` )
-            map_legend
-                        .attr("transform", d => `translate(${width*0.7},-${height*0.92})` )
-                        .selectAll("rect")
-                        .data(occurenceLegend)
-                        .enter()
-                        .append("rect")
-                        .attr("x", (d, i) => legendElementWidth * i)
-                        .attr("y", height - (2*legendHeight))
-                        .attr("width", legendElementWidth)
-                        .attr("height", legendHeight)
-                        .style("fill", d => color_gradient(d.category));
-            map_legend.append("g")
-                        .attr("transform", d => `translate(0,+${height*0.01})` )
-                        .selectAll("text")
-                        .data(occurenceLegend)
-                        .enter()
-                        .append("text")
-                        .text(d => parseInt(d.range[1]) )
-                        .attr("x", (d, i) => legendElementWidth * (i+1)-5)
-                        .attr("y", height - (legendHeight / 2)+5)
-                        .style("fill", "#A4A4A4")
-                        .style('font-weight', 'bold')
-            map_legend.append("g")
-                        .attr("transform", d => `translate(0,+${height*0.01})` )
-                        .append("text")
-                        .text("1")
-                        .attr("x", -5)
-                        .attr("y", height - (legendHeight / 2)+5)
-                        // .style("font-size", "1rem")
-                        .style("fill", "#A4A4A4")
-                        .style('font-weight', 'bold')
-        }
-        if(heatmaps){
-            // console.log(heatmaps)
-            heat_g = g.append("g")
-            const rowHeight = 50;
-            const RectsHeight = rowHeight * heatmaps.occurence.length + margin.top + margin.bottom;
-            const x = d3.scaleLinear()
-                .domain([d3.min(heatmaps.years), d3.max(heatmaps.years) + 1])
-                .range([margin.left+15, width-margin.right-30])
-            const y = d3.scaleBand()
-                .domain(heatmaps.occurence)
-                .rangeRound([height/3, height/3+RectsHeight - margin.bottom])
             
-            const x_axis = heat_g.append("g")
-                .call(g => g.append("g")
-                    .attr("transform", `translate(0,${height/3})`)
-                    .call(d3.axisTop(x).tickValues(heatmaps.years).ticks(null, "d"))
-                    .call(g => g.select(".domain").remove()))
-            const y_axis = heat_g.append("g")
-                .attr("transform", `translate(${margin.left+15},0)`)
-                .call(d3.axisLeft(y).tickSize(0))
-                .call(g => g.select(".domain").remove());
-            rects = heat_g.append("g")
-                .selectAll("g")
-                .data(heatmaps.twoDArray)
-                .join("g")
-                    .attr("transform", (d, i) => `translate(0,${y(heatmaps.occurence[i])})`)
-                .selectAll("rect")
-                .data(d => d)
-                .join("rect")
-                    .attr("x", (d, i) => x(heatmaps.years[i]) + 1)
-                    .attr("width", (d, i) => x(heatmaps.years[i] + 1) - x(heatmaps.years[i]) - 1)
-                    .attr("height", y.bandwidth()-1)
-                    .attr("fill", d => {return color_gradient(d.cat)})
+
+            // Adding text labels
+            map_count_g = g.append("g")
+            .selectAll("text")
+            .data(topojson.feature(us, us.objects.states).features)
+            .enter().append("text")
+            .text((d) => { 
+                if (countmap.get(d.properties.name)&& valuemap.get(d.properties.name)== "Very High") {
+                    // console.log(countmap.get(d.properties.name))
+                    return countmap.get(d.properties.name)
+                } else {
+                    return ""};
+                }
+            ) // Set the label to the state name
+            .attr("x", (d) => path.centroid(d)[0]+20)
+            .attr("y", (d) => path.centroid(d)[1]+15)
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.4em")
+            .style("font-size", "15px") 
+            .style("font-weight", "bold")
+            .style("fill", "white");
+
+
+        }
+
+
 
                         
-            xAxis_1999 = x_axis
-            .append("g")
-            // .style("opacity",0)
-            .attr("transform", `translate(0,${height - margin.bottom*4})`)
-            .call(d3.axisBottom(x)
-                    .tickValues([heatmaps.year])
-                    .tickFormat(x => x)
-                    .tickSize(-RectsHeight-margin.bottom))
-                    .style("color","red")
-                .call(g => g.select(".tick text")
-                    .attr("dy","1.5em")
-                    .clone()
-                    .attr("dy", "3em")
-                    .style("font-weight", "bold")
-                    .text("Columbine Event"))
-                .call(g => g.select(".domain").remove())
-            xAxis_2003 = x_axis
-            .append("g")
-            // .style("opacity",0)
-            .attr("transform", `translate(0,${height - margin.bottom*4})`)
-            .call(d3.axisBottom(x)
-                    .tickValues([2003])
-                    .tickFormat(x => x)
-                    .tickSize(-RectsHeight-margin.bottom))
-                    .style("color","red")
-                .call(g => g.select(".tick text")
-                    .attr("dy","1.5em")
-                    .clone()
-                    .attr("dy", "3em")
-                    .style("font-weight", "bold")
-                    .text("Columbine Event"))
-                .call(g => g.select(".domain").remove())
+            // xAxis_1999 = x_axis
+            // .append("g")
+            // // .style("opacity",0)
+            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            // .call(d3.axisBottom(x)
+            //         .tickValues([heatmaps.year])
+            //         .tickFormat(x => x)
+            //         .tickSize(-RectsHeight-margin.bottom))
+            //         .style("color","red")
+            //     .call(g => g.select(".tick text")
+            //         .attr("dy","1.5em")
+            //         .clone()
+            //         .attr("dy", "3em")
+            //         .style("font-weight", "bold")
+            //         .text("Columbine Event"))
+            //     .call(g => g.select(".domain").remove())
+            // xAxis_2003 = x_axis
+            // .append("g")
+            // // .style("opacity",0)
+            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            // .call(d3.axisBottom(x)
+            //         .tickValues([2003])
+            //         .tickFormat(x => x)
+            //         .tickSize(-RectsHeight-margin.bottom))
+            //         .style("color","red")
+            //     .call(g => g.select(".tick text")
+            //         .attr("dy","1.5em")
+            //         .clone()
+            //         .attr("dy", "3em")
+            //         .style("font-weight", "bold")
+            //         .text("Columbine Event"))
+            //     .call(g => g.select(".domain").remove())
 
 
 
-            // legend
 
-            const legendWidth = 300;
-            const legendHeight = 15;
-            const numColorSteps = 100; 
-
-            legend = heat_g.append("g")
-                .attr("class", "legend")
-                .attr("transform", `translate(${margin.left + 5}, ${height / 5})`);
-
-            const defs = legend.append("defs");
-            const linearGradient = defs.append("linearGradient")
-                .attr("id", "legendGradient")
-                .attr("x1", "0%")
-                .attr("y1", "0%")
-                .attr("x2", "100%")
-                .attr("y2", "0%");
-
-            const domainValues = color_event.domain();
-            const step = (domainValues[1] - domainValues[0]) / numColorSteps;
-            for (let i = 0; i <= numColorSteps; i++) {
-                linearGradient.append("stop")
-                    .attr("offset", `${(i * 100) / numColorSteps}%`)
-                    .attr("stop-color", color_event(domainValues[0] + step * i));
-            }
-
-            legend.append("rect")
-                .attr("x", 0)
-                .attr("y", 0)
-                .attr("width", legendWidth)
-                .attr("height", legendHeight)
-                .style("fill", "url(#legendGradient)");
-
-            const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
-
-            const positionsInLegend = colorRange.map(value => {
-                const mappedPosition = ((value - color_event.domain()[0]) / (color_event.domain()[1] - color_event.domain()[0])) * legendWidth;
-                return mappedPosition;
-            });
-
-
-            const lengendValPos = colorRange.map((value, index) => {
-                return {
-                    value: parseInt(value.toFixed(1)),
-                    position: positionsInLegend[index]
-                };
-            });
-
-            legend.selectAll("line.quantile")
-                .data(lengendValPos)
-                .enter().append("line")
-                .attr("class", "quantile")
-                .attr("x1", d => (d.position))
-                .attr("y1", -3)
-                .attr("x2", d => (d.position))
-                .attr("y2", legendHeight+3)
-                .style("stroke", "#A4A4A4")
-                .style("stroke-width", 1);
-
-            legend.selectAll("text")
-                .data(lengendValPos) // You can choose specific values to display on the legend
-                .enter().append("text")
-                .attr("x", d => (d.position-5))
-                .attr("y", legendHeight + 20)
-                .text(d => (d.value))
-                .style("fill", "#A4A4A4")
-                .style('font-weight', 'bold');
-        }
         if(heatmaps_state){
-            // console.log(heatmaps_state)
             heat_state_g = g.append("g")
             const rowHeight = 12;
             const RectsHeight = rowHeight * heatmaps_state.updatedStates.length + margin.top + margin.bottom;
@@ -861,100 +751,96 @@ function scrollVis(){
                     .attr("height", y.bandwidth()-1)
                     .attr("fill", d => {return color_state(d.value)})
 
-                        
-            
-
-
-
             // legend
 
-            // const legendWidth = 300;
-            // const legendHeight = 15;
-            // const numColorSteps = 100; 
+            const legendWidth = 300;
+            const legendHeight = 15;
+            const numColorSteps = 100; 
 
-            // legend = heat_state_g.append("g")
-            //     .attr("class", "legend")
-            //     .attr("transform", `translate(${margin.left + 5}, ${height / 5})`);
-
-            // const defs = legend.append("defs");
-            // const linearGradient = defs.append("linearGradient")
-            //     .attr("id", "legendGradient")
-            //     .attr("x1", "0%")
-            //     .attr("y1", "0%")
-            //     .attr("x2", "100%")
-            //     .attr("y2", "0%");
-
-            // const domainValues = color_event.domain();
-            // const step = (domainValues[1] - domainValues[0]) / numColorSteps;
-            // for (let i = 0; i <= numColorSteps; i++) {
-            //     linearGradient.append("stop")
-            //         .attr("offset", `${(i * 100) / numColorSteps}%`)
-            //         .attr("stop-color", color_event(domainValues[0] + step * i));
-            // }
-
-            // legend.append("rect")
-            //     .attr("x", 0)
-            //     .attr("y", 0)
-            //     .attr("width", legendWidth)
-            //     .attr("height", legendHeight)
-            //     .style("fill", "url(#legendGradient)");
-
-            // const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
-
-            // const positionsInLegend = colorRange.map(value => {
-            //     const mappedPosition = ((value - color_event.domain()[0]) / (color_event.domain()[1] - color_event.domain()[0])) * legendWidth;
-            //     return mappedPosition;
-            // });
+            legend = heat_state_g.append("g")
+                .attr("class", "legend")
+                .attr("transform", `translate(${margin.left + 5},${height/1.5}) rotate(-90)`);
+                // .attr("transform", `translate(${height / 5},${margin.left + 5})`)
 
 
-            // const lengendValPos = colorRange.map((value, index) => {
-            //     return {
-            //         value: parseInt(value.toFixed(1)),
-            //         position: positionsInLegend[index]
-            //     };
-            // });
+            const defs = legend.append("defs");
+            const linearGradient = defs.append("linearGradient")
+                .attr("id", "legendGradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "100%")
+                .attr("y2", "0%");
 
-            // legend.selectAll("line.quantile")
-            //     .data(lengendValPos)
-            //     .enter().append("line")
-            //     .attr("class", "quantile")
-            //     .attr("x1", d => (d.position))
-            //     .attr("y1", -3)
-            //     .attr("x2", d => (d.position))
-            //     .attr("y2", legendHeight+3)
-            //     .style("stroke", "#A4A4A4")
-            //     .style("stroke-width", 1);
+            const domainValues = color_state.domain();
+            const step = (domainValues[1] - domainValues[0]) / numColorSteps;
+            for (let i = 0; i <= numColorSteps; i++) {
+                linearGradient.append("stop")
+                    .attr("offset", `${(i * 100) / numColorSteps}%`)
+                    .attr("stop-color", color_state(domainValues[0] + step * i));
+            }
 
-            // legend.selectAll("text")
-            //     .data(lengendValPos) // You can choose specific values to display on the legend
-            //     .enter().append("text")
-            //     .attr("x", d => (d.position-5))
-            //     .attr("y", legendHeight + 20)
-            //     .text(d => (d.value))
-            //     .style("fill", "#A4A4A4")
-            //     .style('font-weight', 'bold');
+            legend.append("rect")
+                .attr("x",  -legendWidth)
+                .attr("y",-15)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .attr("transform", `rotate(-180) `)
+                .style("fill", "url(#legendGradient)");
+
+            const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
+
+            const positionsInLegend = colorRange.map(value => {
+                const mappedPosition = ((value - color_state.domain()[0]) / (color_state.domain()[1] - color_state.domain()[0])) * legendWidth;
+                return mappedPosition;
+            });
+
+
+            const lengendValPos = colorRange.map((value, index) => {
+                return {
+                    value: parseInt(value.toFixed(1)),
+                    position: positionsInLegend[index]
+                };
+            });
+
+            legend.selectAll("line.quantile")
+                .data(lengendValPos)
+                .enter().append("line")
+                .attr("class", "quantile")
+                .attr("x1", d => (d.position))
+                .attr("y1", -3)
+                .attr("x2", d => (d.position))
+                .attr("y2", legendHeight+3)
+                .style("stroke", "#A4A4A4")
+                .style("stroke-width", 1);
+
+            legend.selectAll("text")
+                .data(lengendValPos) // You can choose specific values to display on the legend
+                .enter().append("text")
+                .attr("y", d => (d.position-5))
+                .attr("x", legendHeight + 20)
+                .text(d => (d.value))
+                .attr("transform",`translate(${legendWidth-10},0) rotate(90)`)
+                .style("fill", "#A4A4A4")
+                .style('font-weight', 'bold');
         }
 
         if (map_g) {
             map_g.attr('opacity', 0);
             map_text_g.attr('opacity', 0);
-            map_legend.attr('opacity', 0);
-            // map_legend_text1.attr('opacity', 0);
-            // map_legend_text2.attr('opacity', 0);
+            circle_g.attr('opacity', 0);
+            
             // d3.select("#intro").style("opacity", 0);
+        }
+        if(map_count_g){
+            map_count_g.attr('opacity', 0);
         }
         if (map_text_g) {
             map_text_g.attr('opacity', 0);
-            legend.attr('opacity', 0);
-            xAxis_1999.attr('opacity', 0);
-            xAxis_2003.attr('opacity', 0);
-        }
-        if(heat_g){
-            heat_g.attr('opacity', 0);
         }
 
         if(heat_state_g){
             heat_state_g.attr('opacity', 0);
+            legend.attr('opacity', 0);
         }
 
 
@@ -1033,8 +919,8 @@ function scrollVis(){
                 (deceasedPieData);
 
             var arc = d3.arc()
-                .innerRadius(80)
-                .outerRadius(160)
+                .innerRadius(60)
+                .outerRadius(120)
             
             deceased_pie_g = svg.append("g")
                 .attr("class", "pie")
@@ -1053,11 +939,11 @@ function scrollVis(){
             arcs.append("text")
                 .attr("transform", d => {
                 var c = arc.centroid(d);
-                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.5 + ")";
+                return "translate("  + (c[0] * 1.8-10) + "," + (c[1] * 1.9+30) + ")";
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => deceasedPieData[i].name)
-                .style("font-size", 10)
+                .style("font-size", 8)
                 .attr("fill", "black");
 
             arcs.append("text")
@@ -1066,7 +952,11 @@ function scrollVis(){
                 return "translate("  + c[0] + "," + c[1] + ")";
                 })
                 .attr("text-anchor", "middle")
-                .text((d, i) => `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
+                .text(function(d, i) {
+                    if(Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) > 1){
+                        return `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`
+                    }
+                })
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
@@ -1078,8 +968,8 @@ function scrollVis(){
                 (shootingPieData);
 
             var arc = d3.arc()
-                .innerRadius(80)
-                .outerRadius(160)
+                .innerRadius(60)
+                .outerRadius(120)
             
             shooting_pie_g = svg.append("g")
                 .attr("transform", `translate(750, 200)`);
@@ -1097,7 +987,7 @@ function scrollVis(){
             arcs.append("text")
                 .attr("transform", d => {
                 var c = arc.centroid(d);
-                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.5 + ")";
+                return "translate("  + c[0] * 1.8 + "," + (c[1] * 1.5-10) + ")";
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => shootingPieData[i].name)
@@ -1122,11 +1012,11 @@ function scrollVis(){
                 (weaponPieData);
 
             var arc = d3.arc()
-                .innerRadius(80)
-                .outerRadius(160)
+                .innerRadius(60)
+                .outerRadius(120)
             
             weapon_pie_g = svg.append("g")
-                .attr("transform", `translate(525, 500)`);
+                .attr("transform", `translate(525, 450)`);
             
             var arcs = weapon_pie_g.selectAll("arc")
                 .data(pie)
@@ -1141,7 +1031,7 @@ function scrollVis(){
             arcs.append("text")
                 .attr("transform", d => {
                 var c = arc.centroid(d);
-                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.5 + ")";
+                return "translate("  + c[0] * 1.8 + "," + c[1] * 1.6 + ")";
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => weaponPieData[i].name)
@@ -1154,7 +1044,11 @@ function scrollVis(){
                 return "translate("  + c[0] + "," + c[1] + ")";
                 })
                 .attr("text-anchor", "middle")
-                .text((d, i) => `${-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
+                .text(function(d, i) {
+                    if(-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) > 1){
+                        return `${-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`
+                    }
+                })
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
@@ -1216,10 +1110,11 @@ function scrollVis(){
         .attr('opacity', 1);
 
         // d3.select("#intro").attr("opacity", 0);
-        hideMap();
-        hideMaptext();
-        hideHeat();
-        hideHeatState();
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
+        hideDots(circle_g)
     }
     /**
      * showIntro - show introduction
@@ -1253,14 +1148,6 @@ function scrollVis(){
             .transition()
             .duration(600)
             .attr('opacity', 1.0)
-            // .style("fill", "#fcfcfc")
-            // .style("fill",(d) => { 
-            //     if (valuemap.get(d.properties.name)) {
-            //         return color_cat(valuemap.get(d.properties.name)) 
-            //     } else {
-            //         return "white"
-            //     };
-            // })
             .transition(1000)
             .style("fill",(d) => {
                 if (d.properties.name == "Colorado") {
@@ -1277,18 +1164,24 @@ function scrollVis(){
             .duration(600)
             .attr('opacity', 1.0)
         }
+        hideMapcount(map_count_g);
 
-        hidePie();
-        hideHeat();
-        hideHeatState();
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g )
+        hideHeatState(heat_state_g,legend,heat_rects);
+        hideDots(circle_g)
     }
     function showMapDots(){
-        hideHeat();
-        hidePie();
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         if(map_g){
             map_g
             .transition()
             .style("fill","#E5E4E2")
+
+            circle_g
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1.0)
         }
     }
     /**
@@ -1299,31 +1192,20 @@ function scrollVis(){
      *
      */
     function showMapGradient() {
-        hideHeat();
-        hidePie();
-        hideLine();
+        hideDots(circle_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideLine(line_g);
         if (map_g) {
             map_g
             .transition()
             .style("fill",(d) => {
-                if(valuemap.get(d.properties.name)) {
+                if(valuemap.get(d.properties.name) && valuemap.get(d.properties.name)== "Very High") {
                     return color_gradient(valuemap.get(d.properties.name)) 
                 } else {
                     return "#E5E4E2"
                 };
             })
-            // .transition()
-            // .style("fill",(d) => {
-            //     if (d.properties.name == "Colorado") {
-            //         return ("#773737");
-            //     } else {
-            //         if(valuemap.get(d.properties.name)){
-            //             return color_gradient(valuemap.get(d.properties.name)) 
-            //         } else {
-            //             return "white"
-            //         };
-            //     }
-            // })
+
         }
         if (map_text_g) {
             map_text_g
@@ -1331,12 +1213,13 @@ function scrollVis(){
             .duration(0)
             .attr('opacity', 1.0);
         }
-        if (map_legend) {
-            map_legend
+        if(map_count_g){
+            map_count_g
             .transition()
             .duration(0)
             .attr('opacity', 1.0);
-        }        
+        }
+        
 
     }
 
@@ -1348,35 +1231,14 @@ function scrollVis(){
      *
      */
     function showHeat() {
-        hideMap();
-        hideMaptext();
-        hidePie();
-        hideHeatState();
-        hideLine();
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
+        hideLine(line_g);
 
-        if (heat_g) {
-            heat_g
-            .transition()
-            .duration(1000)
-            .attr('opacity', 1.0);
 
-            legend
-            .transition()
-            .duration(2000)
-            .attr('opacity', 1.0);
-                            
-            rects.transition()
-                .duration(2000)
-                .attr('opacity', 1.0)
-                .style("fill",(d,i)=> {return color_event(d.value)})
-
-            xAxis_1999.transition()
-                .duration(2000)
-                .attr("opacity",0.6)
-            xAxis_2003.transition()
-                .duration(4000)
-                .attr("opacity",0.6)
-        }
 
         // g.selectAll('.square')
         // .transition()
@@ -1388,11 +1250,11 @@ function scrollVis(){
         // .attr('fill', '#ddd');
     }
     function showHeatState() {
-        hideMap();
-        hideMaptext();
-        hidePie();
-        hideHeat();
-        
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideLine(line_g);
         if (heat_state_g) {
             heat_state_g
             .transition()
@@ -1402,10 +1264,10 @@ function scrollVis(){
             .transition()
             .duration(1000)
             .attr('opacity', 1.0)
-            // legend
-            // .transition()
-            // .duration(2000)
-            // .attr('opacity', 1.0);
+            legend
+            .transition()
+            .duration(2000)
+            .attr('opacity', 1.0);
                             
             // rects.transition()
             //     .duration(2000)
@@ -1415,14 +1277,6 @@ function scrollVis(){
 
         }
 
-        // g.selectAll('.square')
-        // .transition()
-        // .duration(600)
-        // .delay(function (d) {
-        //     return 5 * d.row;
-        // })
-        // .attr('opacity', 1.0)
-        // .attr('fill', '#ddd');
     }
     /**
      * highlightGrid - show fillers in grid
@@ -1432,48 +1286,48 @@ function scrollVis(){
      *  filler words. also ensures squares
      *  are moved back to their place in the grid
      */
-    function highlightGrid() {
-        hideHeat();
-        hideMaptext();
-        hidePie();
-        hideLine();
+    // function highlightGrid() {
+    //     hideHeat(heat_g,legend,rects,xAxis_1999,xAxis_2003);
+    //     hideMaptext(map_text_g);
+    //     hidePie(pie_g);
+    //     hideLine(line_g);
 
-        g.selectAll('.bar .pie')
-        .transition()
-        .duration(600)
-        .attr('width', 0);
+    //     g.selectAll('.bar .pie')
+    //     .transition()
+    //     .duration(600)
+    //     .attr('width', 0);
 
-        g.selectAll('.bar-text')
-        .transition()
-        .duration(0)
-        .attr('opacity', 0);
+    //     g.selectAll('.bar-text')
+    //     .transition()
+    //     .duration(0)
+    //     .attr('opacity', 0);
 
 
-        g.selectAll('.square')
-        .transition()
-        .duration(0)
-        .attr('opacity', 1.0)
-        .attr('fill', '#ddd');
+    //     g.selectAll('.square')
+    //     .transition()
+    //     .duration(0)
+    //     .attr('opacity', 1.0)
+    //     .attr('fill', '#ddd');
 
-        // use named transition to ensure
-        // move happens even if other
-        // transitions are interrupted.
-        g.selectAll('.fill-square')
-        .transition('move-fills')
-        .duration(800)
-        .attr('x', function (d) {
-            return d.x;
-        })
-        .attr('y', function (d) {
-            return d.y;
-        });
+    //     // use named transition to ensure
+    //     // move happens even if other
+    //     // transitions are interrupted.
+    //     g.selectAll('.fill-square')
+    //     .transition('move-fills')
+    //     .duration(800)
+    //     .attr('x', function (d) {
+    //         return d.x;
+    //     })
+    //     .attr('y', function (d) {
+    //         return d.y;
+    //     });
 
-        g.selectAll('.fill-square')
-        .transition()
-        .duration(800)
-        .attr('opacity', 1.0)
-        .attr('fill', function (d) { return d.filler ? '#008080' : '#ddd'; });
-    }
+    //     g.selectAll('.fill-square')
+    //     .transition()
+    //     .duration(800)
+    //     .attr('opacity', 1.0)
+    //     .attr('fill', function (d) { return d.filler ? '#008080' : '#ddd'; });
+    // }
 
     /**
      * showBar - barchart
@@ -1483,49 +1337,49 @@ function scrollVis(){
      * shows: barchart
      *
      */
-    function showBar() {
-        // ensure bar axis is set
+    // function showBar() {
+    //     // ensure bar axis is set
 
-        hideHeat();
-        hideMaptext();
-        hidePie();
-        hideLine();
+    //     hideHeat(heat_g,legend,rects,xAxis_1999,xAxis_2003);
+    //     hideMaptext(map_text_g);
+    //     hidePie(pie_g);
+    //     hideLine(line_g);
 
-        g.selectAll('.square')
-        .transition()
-        .duration(800)
-        .attr('opacity', 0);
+    //     g.selectAll('.square')
+    //     .transition()
+    //     .duration(800)
+    //     .attr('opacity', 0);
 
-        g.selectAll('.fill-square')
-        .transition()
-        .duration(800)
-        .attr('x', 0)
-        .attr('y', function (d, i) {
-            return yBarScale(i % 3) + yBarScale.bandwidth() / 2;
-        })
-        .transition()
-        .duration(0)
-        .attr('opacity', 0);
+    //     g.selectAll('.fill-square')
+    //     .transition()
+    //     .duration(800)
+    //     .attr('x', 0)
+    //     .attr('y', function (d, i) {
+    //         return yBarScale(i % 3) + yBarScale.bandwidth() / 2;
+    //     })
+    //     .transition()
+    //     .duration(0)
+    //     .attr('opacity', 0);
 
-        g.selectAll('.hist')
-        .transition()
-        .duration(600)
-        .attr('height', function () { return 0; })
-        .attr('y', function () { return height; })
-        .style('opacity', 0);
+    //     g.selectAll('.hist')
+    //     .transition()
+    //     .duration(600)
+    //     .attr('height', function () { return 0; })
+    //     .attr('y', function () { return height; })
+    //     .style('opacity', 0);
 
-        g.selectAll('.bar .pie')
-        .transition()
-        .delay(function (d, i) { return 300 * (i + 1);})
-        .duration(600)
-        .attr('width', function (d) { return xBarScale(d.value); });
+    //     g.selectAll('.bar .pie')
+    //     .transition()
+    //     .delay(function (d, i) { return 300 * (i + 1);})
+    //     .duration(600)
+    //     .attr('width', function (d) { return xBarScale(d.value); });
 
-        g.selectAll('.bar-text')
-        .transition()
-        .duration(600)
-        .delay(1200)
-        .attr('opacity', 1);
-    }
+    //     g.selectAll('.bar-text')
+    //     .transition()
+    //     .duration(600)
+    //     .delay(1200)
+    //     .attr('opacity', 1);
+    // }
 
     /**
      * showHistPart - shows the first part
@@ -1536,33 +1390,33 @@ function scrollVis(){
      * shows: first half of histogram
      *
      */
-    function showHistPart() {
-        // switch the axis to histogram one
-        // hideAxis();
-        hidePie();
-        hideHeat();
-        hideMaptext();
-        hideLine();
+    // function showHistPart() {
+    //     // switch the axis to histogram one
+    //     // hideAxis();
+    //     hidePie(pie_g);
+    //     hideHeat(heat_g,legend,rects,xAxis_1999,xAxis_2003);
+    //     hideMaptext(map_text_g);
+    //     hideLine(line_g);
 
-        g.selectAll('.bar-text')
-        .transition()
-        .duration(0)
-        .attr('opacity', 0);
+    //     g.selectAll('.bar-text')
+    //     .transition()
+    //     .duration(0)
+    //     .attr('opacity', 0);
 
-        g.selectAll('.bar .pie')
-        .transition()
-        .duration(600)
-        .attr('width', 0);
+    //     g.selectAll('.bar .pie')
+    //     .transition()
+    //     .duration(600)
+    //     .attr('width', 0);
 
-        // here we only show a bar if
-        // it is before the 15 minute mark
-        g.selectAll('.hist')
-        .transition()
-        .duration(600)
-        .attr('y', function (d) { return (d.x0 < 15) ? yHistScale(d.length) : height; })
-        .attr('height', function (d) { return (d.x0 < 15) ? height - yHistScale(d.length) : 0; })
-        .style('opacity', function (d) { return (d.x0 < 15) ? 1.0 : 1e-6; });
-    }
+    //     // here we only show a bar if
+    //     // it is before the 15 minute mark
+    //     g.selectAll('.hist')
+    //     .transition()
+    //     .duration(600)
+    //     .attr('y', function (d) { return (d.x0 < 15) ? yHistScale(d.length) : height; })
+    //     .attr('height', function (d) { return (d.x0 < 15) ? height - yHistScale(d.length) : 0; })
+    //     .style('opacity', function (d) { return (d.x0 < 15) ? 1.0 : 1e-6; });
+    // }
 
     /**
      * showHistAll - show all histogram
@@ -1574,40 +1428,40 @@ function scrollVis(){
      * shows: all histogram bars
      *
      */
-    function showHistAll() {
-        // ensure the axis to histogram one
-        // hideAxis();
-        hidePie();
-        hideHeat();
-        hideMaptext();
-        hideLine();
+    // function showHistAll() {
+    //     // ensure the axis to histogram one
+    //     // hideAxis();
+    //     hidePie();
+    //     hideHeat();
+    //     hideMaptext();
+    //     hideLine();
 
-        g.selectAll('.cough')
-        .transition()
-        .duration(0)
-        .attr('opacity', 0);
+    //     g.selectAll('.cough')
+    //     .transition()
+    //     .duration(0)
+    //     .attr('opacity', 0);
 
-        // named transition to ensure
-        // color change is not clobbered
-        g.selectAll('.hist')
-        .transition('color')
-        .duration(500)
-        .style('fill', '#008080');
+    //     // named transition to ensure
+    //     // color change is not clobbered
+    //     g.selectAll('.hist')
+    //     .transition('color')
+    //     .duration(500)
+    //     .style('fill', '#008080');
 
-        g.selectAll('.hist')
-        .transition()
-        .duration(1200)
-        .attr('y', function (d) { return yHistScale(d.length); })
-        .attr('height', function (d) { return height - yHistScale(d.length); })
-        .style('opacity', 1.0);
-    }
+    //     g.selectAll('.hist')
+    //     .transition()
+    //     .duration(1200)
+    //     .attr('y', function (d) { return yHistScale(d.length); })
+    //     .attr('height', function (d) { return height - yHistScale(d.length); })
+    //     .style('opacity', 1.0);
+    // }
 
     function showPie() {
         
         // hideMap();
         // hideMaptext();
         // hideHeat();
-        hideLine();
+        hideLine(line_g);
         
         // ensure the axis to histogram one
         if (deceased_pie_g) {
@@ -1619,13 +1473,13 @@ function scrollVis(){
         if (shooting_pie_g) {
             shooting_pie_g
             .transition()
-            .duration(600)
+            .duration(1200)
             .attr('opacity', 1.0);
         }
         if (weapon_pie_g) {
             weapon_pie_g
             .transition()
-            .duration(600)
+            .duration(1800)
             .attr('opacity', 1.0);
         }
 
@@ -1653,8 +1507,8 @@ function scrollVis(){
         
         // hideMap();
         // hideMaptext();
-        hideHeat();
-        hidePie();
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
         
         // ensure the axis to histogram one
         if (line_g) {
@@ -1706,115 +1560,22 @@ function scrollVis(){
      * shows: histogram
      *
      */
-    function showCough() {
-        // ensure the axis to histogram one
-        // hideAxis();
-        hidePie();
-        hideHeat();
-        hideLine();
+    // function showCough() {
+    //     // ensure the axis to histogram one
+    //     // hideAxis();
+    //     hidePie();
+    //     hideHeat();
+    //     hideLine();
 
-        g.selectAll('.hist')
-        .transition()
-        .duration(600)
-        .attr('y', function (d) { return yHistScale(d.length); })
-        .attr('height', function (d) { return height - yHistScale(d.length); })
-        .style('opacity', 1.0);
+    //     g.selectAll('.hist')
+    //     .transition()
+    //     .duration(600)
+    //     .attr('y', function (d) { return yHistScale(d.length); })
+    //     .attr('height', function (d) { return height - yHistScale(d.length); })
+    //     .style('opacity', 1.0);
 
-    }
-    function hideMap() {
-        if (map_g) {
-            map_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-        if(map_legend){
-            map_legend
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-        }
-            
-        }
-    }
+    // }
 
-    function hideHeat() {
-        if (heat_g) {
-            heat_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-            legend
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-            rects
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);  
-            xAxis_1999
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-            xAxis_2003
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);          
-        }
-
-    }
-    function hideHeatState() {
-        if (heat_state_g) {
-            heat_state_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-            heat_rects
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);  
-                     
-        }
-
-    }
-
-    function hidePie() {
-        if (deceased_pie_g) {
-            deceased_pie_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-        }
-        if (shooting_pie_g) {
-            shooting_pie_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-        }
-        if (weapon_pie_g) {
-            weapon_pie_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-        }
-    }
-
-    function hideMaptext() {
-        if (map_text_g) {
-            map_text_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0)
-        }
-    }
-
-    function hideLine() {
-        if(line_g){
-            line_g
-            .transition()
-            .duration(0)
-            .attr('opacity', 0);
-        }
-    }
 
     /**
      * UPDATE FUNCTIONS
@@ -1836,7 +1597,7 @@ function scrollVis(){
      *  how far user has scrolled in section
      */
     function updateCough(progress) {
-        hidePie();
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         
         hideHeat();
         g.selectAll('.cough')
