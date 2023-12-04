@@ -400,7 +400,7 @@ function scrollVis(){
 
     var width = 975;
     var height = 610;
-    var margin = { top: -30, left: 20, bottom: 40, right: 10 };
+    var margin = { top: 0, left: 20, bottom: 40, right: 10 };
 
     var lastIndex = -1;
     var activeIndex = 0;
@@ -1238,7 +1238,7 @@ function scrollVis(){
             .data(heatmaps_state.twoDArray)
             .transition()
             .duration(6000)
-            .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])})`)
+            .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])? y(heatmaps_state.updatedStates[i]): -100})`)
             heat_state_g.selectAll("#small_rects")
             .attr("height", y.bandwidth()-1)
         } 
