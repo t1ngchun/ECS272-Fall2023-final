@@ -20,7 +20,7 @@
             </section>
             <section class="step boarder">
                 <div class="title">We focus on the states which has high frequency of events occurence (event number > 11).</div>
-                From 1999 to 2023 we found out that California (40), Texas (25), Florida (24), and North Carolina (21).
+                From 1999 to 2023 we found out that California (40), Texas (25), Florida (24), and North Carolina (21) have the most number of school shooting events.
             </section>
             <section class="step boarder">
                 <div class="title">Screenshot</div>
@@ -129,72 +129,6 @@ function getOcc(data) {
 
     return formattedData;
 }
-// for heat map
-function getHeatMapData(data) {
-    const years = [...new Set(data.map(item => item.year))]
-    const nameToOccCatMap = getOcc(data).reduce((acc, item) => {
-        acc[item.name] = item.occ_cat;
-        return acc;
-    }, {});
-    
-    const countByYearCategory = {};
-
-    data.forEach((event) => {
-        const { state, year } = event;
-        const category = nameToOccCatMap[state];
-        
-        // Initialize count for the year if not present
-        countByYearCategory[category] = countByYearCategory[category] || {};
-        
-        // Initialize count for the category if not present
-        countByYearCategory[category][year] = (countByYearCategory[category][year] || 0) + 1;
-    });
-  
-    years.forEach((year) => {
-        occurence.forEach((category) => {
-            countByYearCategory[category][year] = countByYearCategory[category][year] || 0;
-        });
-    });
-    let rearrangedObject = {};
-    occurence.forEach(key => {
-        rearrangedObject[key] = countByYearCategory[key];
-    });
-    const result = Object.keys(rearrangedObject).flatMap(category => {
-        const values = Object.values(rearrangedObject[category]);
-        return values.map(value => ({ cat: category, value: value.toString() }));
-    });
-    // console.log(result)
-    const numRows = 4;
-    const numColumns = years.length;
-
-    // Create a 2D array
-    let twoDArray = [];
-
-    // Iterate over rows
-    for (let i = 0; i < numRows; i++) {
-    // Extract a portion of the 1D array for each row
-    let row = result.slice(i * numColumns, (i + 1) * numColumns);
-    
-    // Push the row to the 2D array
-    twoDArray.push(row);
-    }
-
-    // const values = occurence.map(category =>
-    //     years.map(year => countByYearCategory[category][year] || 0)
-    // );
-    const values1DArray = Object.values(countByYearCategory).flatMap(yearCounts =>
-        Object.values(yearCounts)
-    );
-    
-    return {
-        twoDArray,
-        values1DArray,
-        occurence,
-        years,
-        year: 1999
-    };
-}
-
 function getHeatMapData_state(data) {
     const years = [...new Set(data.map(item => item.year))]
     const states = [...new Set(data.map(item => item.state))]
@@ -202,33 +136,23 @@ function getHeatMapData_state(data) {
         acc[item.name] = item.occ_cat;
         return acc;
     }, {});
-    // Create an array of objects with state names and categories
     const sortedStatesByOccurrence = states.map(state => ({
         state,
         category: nameToOccCatMap[state] || "Unknown" 
     }));
-    console.log(sortedStatesByOccurrence)
-    
-    // Sort the array based on the occurrence order
+
     sortedStatesByOccurrence.sort((a, b) => {
         return (
             occurence.indexOf(a.category) - occurence.indexOf(b.category)
         );
     });
     const updatedStates = sortedStatesByOccurrence.map(item => item.state);
-    console.log(updatedStates)
-    console.log(sortedStatesByOccurrence);
-    // console.log(nameToOccCatMap)
+    const highStates = sortedStatesByOccurrence.filter(item => item.category === "Very High").map(item => item.state);
     const countByYearCategory = {};
 
     data.forEach((event) => {
         const { state, year } = event;
-        // const category = nameToOccCatMap[state];
-        
-        // Initialize count for the year if not present
         countByYearCategory[state] = countByYearCategory[state] || {};
-        
-        // Initialize count for the category if not present
         countByYearCategory[state][year] = (countByYearCategory[state][year] || 0) + 1;
     });
     years.forEach((year) => {
@@ -236,8 +160,7 @@ function getHeatMapData_state(data) {
             countByYearCategory[state][year] = countByYearCategory[state][year] || 0;
         });
     });
-    // console.log(countByYearCategory)
-    // console.log(states.length)
+
     let rearrangedObject = {};
     updatedStates.forEach(key => {
         rearrangedObject[key] = countByYearCategory[key];
@@ -246,25 +169,16 @@ function getHeatMapData_state(data) {
         const values = Object.values(rearrangedObject[state]);
         return values.map(value => ({ state: state, value: value.toString() }));
     });
-    // console.log(result)
+
     const numRows = updatedStates.length;
     const numColumns = years.length;
 
-    // Create a 2D array
     let twoDArray = [];
 
-    // Iterate over rows
     for (let i = 0; i < numRows; i++) {
-    // Extract a portion of the 1D array for each row
-    let row = result.slice(i * numColumns, (i + 1) * numColumns);
-    
-    // Push the row to the 2D array
+        let row = result.slice(i * numColumns, (i + 1) * numColumns);
     twoDArray.push(row);
     }
-
-    // const values = states.map(state =>
-    //     years.map(year => countByYearCategory[state][year] || 0)
-    // );
     const values1DArray = Object.values(countByYearCategory).flatMap(yearCounts =>
         Object.values(yearCounts)
     );
@@ -274,12 +188,12 @@ function getHeatMapData_state(data) {
         values1DArray,
         sortedStatesByOccurrence,
         updatedStates,
+        highStates,
         years,
         year: 1999
     };
 }
 // for pie chart
-
 function filteredPieChartData(data) {
     let formattedData = [];
     Object.keys(data).forEach(d => {
@@ -415,7 +329,6 @@ function getWeaponData (data) {
 let convertedData = null;
 let shootings = null;
 let occurenceLegend = null;
-let heatmaps = null;
 let heatmaps_state = null;
 let deceasedPieData = null;
 let shootingPieData = null;
@@ -426,7 +339,6 @@ let ageLine = null;
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
     convertedData = loadedData.map(item => {
-    // Convert 'year' property to a number, keep other properties unchanged
         return {
             ...item,
             long: +item.long,
@@ -434,16 +346,12 @@ d3.csv('../../data/school-shootings.csv')
             year: !isNaN(item.year) ? +item.year : item.year
         };
     });
-    console.log(convertedData)
     shootings = getOcc(loadedData);
-    console.log(shootings)
-    heatmaps = getHeatMapData(convertedData)
 
     heatmaps_state = getHeatMapData_state(convertedData)
     display(convertedData)
 
     display(shootings)
-    display(heatmaps)
     display(heatmaps_state)
 
     lineChartData = getShooterAgeData(loadedData)
@@ -459,64 +367,37 @@ d3.csv('../../data/school-shootings.csv')
     display(weaponPieData)
   })
   .catch(function(error) {
-    // Handle error if data loading fails
     console.error('Error loading data:', error);
   });
 
 let us = null;
 d3.json('../../data/states-albers-10m.json')
   .then(function(loadedData) {
-    // Assign loaded data to the variable
     us = loadedData;
     display(us)
   })
   .catch(function(error) {
-    // Handle error if data loading fails
     console.error('Error loading data:', error);
   });
 let gun = null;
 d3.xml('../../data/gun-svgrepo-com.svg').then(svgData => {
     gun = svgData
 });
-/*
- * scrollVis - encapsulates
- * all the code for the visualization
- * using reusable charts pattern:
- * http://bost.ocks.org/mike/chart/
- */
+
 
 function scrollVis(){
-    // constants to define the size
-    // and margins of the vis area.
+
     var width = 975;
     var height = 610;
-    var margin = { top: 0, left: 20, bottom: 40, right: 10 };
+    var margin = { top: -30, left: 20, bottom: 40, right: 10 };
 
-    // Keep track of which visualization
-    // we are on and which was the last
-    // index activated. When user scrolls
-    // quickly, we want to call all the
-    // activate functions that they pass.
     var lastIndex = -1;
     var activeIndex = 0;
 
-    // // Sizing for the grid visualization
 
-    // main svg used for visualization
     var svg = null;
-
-    // d3 selection that will be used
-    // for displaying visualizations
     var g = null;
-
-    // When scrolling to a new section
-    // the activation function for that
-    // section is called.
     var activateFunctions = [];
-    // If a section has an update function
-    // then it is called while scrolling
-    // through the section with the current
-    // progress through the section.
     var updateFunctions = [];
 
     /**
@@ -528,7 +409,6 @@ function scrollVis(){
      */
     var chart = function (selection) {
         selection.each(function () {
-        
             svg = d3.select('#graphic #vis')
                 .selectAll('svg')
                 .data([null]) 
@@ -536,15 +416,10 @@ function scrollVis(){
                 .attr("viewBox", [0, 0, width, height])
                 .attr("width", width )
                 .attr("height", height );
-
             svg.append('g');
-
             // This group element will be used to contain all other elements.
             g = svg.select('g')
-                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-            
-
-                
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');  
             setupVis();
             setupSections();
         });
@@ -556,6 +431,10 @@ function scrollVis(){
     let map_g = null;
     let circle_g = null;
     let heat_state_g = null;
+    let x = null;
+    let y = null;
+    let y_axis = null;
+    let x_axis = null;
     let deceased_pie_g = null;
     let shooting_pie_g = null;
     let weapon_pie_g = null;
@@ -568,18 +447,10 @@ function scrollVis(){
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
     const countmap = new Map(shootings?.map(d => [d.name, d.value]));
-    console.log(countmap)
-    // const color_cat = d3.scaleOrdinal(d3.schemePastel1)
     const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
-    // for heatmap
-    // const color_event = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps.values1DArray)])
-    // const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
-    // for each state heatmap
     const color_state = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps_state.values1DArray)])
-    /**
-     * setupVis - creates initial elements for all
-     * sections of the visualization.
-     */
+    
+    //line chart
     function transition(path) {
         var totalLength = path.node().getTotalLength();
         path.attr("stroke-dasharray", totalLength)
@@ -590,7 +461,6 @@ function scrollVis(){
     }
 
     var setupVis = function () {
-        
         g.append('text')
         .attr('class', 'title event-title')
         .attr('x', width / 2)
@@ -609,7 +479,6 @@ function scrollVis(){
 
         // draw the map
         if (us) {
-
             let path = d3.geoPath()
             map_g = g.append("g")            
             .selectAll("path")
@@ -633,7 +502,7 @@ function scrollVis(){
                 return projection([d.long,d.lat])[1];
             })
             .attr("r", 3)
-            .attr("fill", "red"); 
+            .attr("fill", "#fb6a4a"); 
             // Adding text labels
             map_text_g = g.append("g")
             .selectAll("text")
@@ -645,15 +514,13 @@ function scrollVis(){
                 } else {
                     return ""};
                 }
-            ) // Set the label to the state name
+            ) 
             .attr("x", (d) => path.centroid(d)[0])
             .attr("y", (d) => path.centroid(d)[1])
             .attr("text-anchor", "middle")
             .attr("dy", "0.4em")
             .style("font-size", "10px") 
             .style("fill", "black");
-            
-
             // Adding text labels
             map_count_g = g.append("g")
             .selectAll("text")
@@ -674,92 +541,54 @@ function scrollVis(){
             .style("font-size", "15px") 
             .style("font-weight", "bold")
             .style("fill", "white");
-
-
         }
-
-
-
-                        
-            // xAxis_1999 = x_axis
-            // .append("g")
-            // // .style("opacity",0)
-            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
-            // .call(d3.axisBottom(x)
-            //         .tickValues([heatmaps.year])
-            //         .tickFormat(x => x)
-            //         .tickSize(-RectsHeight-margin.bottom))
-            //         .style("color","red")
-            //     .call(g => g.select(".tick text")
-            //         .attr("dy","1.5em")
-            //         .clone()
-            //         .attr("dy", "3em")
-            //         .style("font-weight", "bold")
-            //         .text("Columbine Event"))
-            //     .call(g => g.select(".domain").remove())
-            // xAxis_2003 = x_axis
-            // .append("g")
-            // // .style("opacity",0)
-            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
-            // .call(d3.axisBottom(x)
-            //         .tickValues([2003])
-            //         .tickFormat(x => x)
-            //         .tickSize(-RectsHeight-margin.bottom))
-            //         .style("color","red")
-            //     .call(g => g.select(".tick text")
-            //         .attr("dy","1.5em")
-            //         .clone()
-            //         .attr("dy", "3em")
-            //         .style("font-weight", "bold")
-            //         .text("Columbine Event"))
-            //     .call(g => g.select(".domain").remove())
-
-
-
 
         if(heatmaps_state){
             heat_state_g = g.append("g")
             const rowHeight = 12;
             const RectsHeight = rowHeight * heatmaps_state.updatedStates.length + margin.top + margin.bottom;
-            const x = d3.scaleLinear()
+            x = d3.scaleLinear()
                 .domain([d3.min(heatmaps_state.years), d3.max(heatmaps_state.years) + 1])
                 .range([margin.left+width/6, (width-margin.right-30)/1.1])
-            const y = d3.scaleBand()
+            y = d3.scaleBand()
                 .domain(heatmaps_state.updatedStates)
-                .rangeRound([height/15, height/15+RectsHeight - margin.bottom])
-            
-            const x_axis = heat_state_g.append("g")
+                .rangeRound([height/12+20, height/12+20+RectsHeight - margin.bottom])
+ 
+
+            x_axis = heat_state_g.append("g")
                 .call(g => g.append("g")
-                    .attr("transform", `translate(0,${height/15})`)
+                    .attr("transform", `translate(0,${height/12+20})`)
                     .call(d3.axisTop(x).tickValues(heatmaps_state.years).ticks(null, "d"))
                     .call(g => g.select(".domain").remove()))
-            const y_axis = heat_state_g.append("g")
+            y_axis = heat_state_g.append("g")
                 .attr("transform", `translate(${margin.left+width/6},0)`)
                 .call(d3.axisLeft(y).tickSize(0))
-                .call(g => g.select(".domain").remove());
+
             heat_rects = heat_state_g.append("g")
                 .selectAll("g")
                 .data(heatmaps_state.twoDArray)
-                .join("g")
-                    .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])})`)
+                .enter()
+                .append("g")
+                .attr("id", "long_rects")
+                .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])})`)
                 .selectAll("rect")
                 .data(d => d)
-                .join("rect")
+                .enter()
+                .append("rect")
+                .attr("id", "small_rects")
                     .attr("x", (d, i) => x(heatmaps_state.years[i]) + 1)
                     .attr("width", (d, i) => x(heatmaps_state.years[i] + 1) - x(heatmaps_state.years[i]) - 1)
                     .attr("height", y.bandwidth()-1)
                     .attr("fill", d => {return color_state(d.value)})
-
+        
             // legend
-
-            const legendWidth = 300;
+            const legendWidth = 200;
             const legendHeight = 15;
             const numColorSteps = 100; 
 
             legend = heat_state_g.append("g")
                 .attr("class", "legend")
                 .attr("transform", `translate(${margin.left + 5},${height/1.5}) rotate(-90)`);
-                // .attr("transform", `translate(${height / 5},${margin.left + 5})`)
 
 
             const defs = legend.append("defs");
@@ -813,7 +642,7 @@ function scrollVis(){
                 .style("stroke-width", 1);
 
             legend.selectAll("text")
-                .data(lengendValPos) // You can choose specific values to display on the legend
+                .data(lengendValPos)
                 .enter().append("text")
                 .attr("y", d => (d.position-5))
                 .attr("x", legendHeight + 20)
@@ -821,14 +650,47 @@ function scrollVis(){
                 .attr("transform",`translate(${legendWidth-10},0) rotate(90)`)
                 .style("fill", "#A4A4A4")
                 .style('font-weight', 'bold');
+
+
+
+            // xAxis_1999 = x_axis
+            // .append("g")
+            // // .style("opacity",0)
+            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            // .call(d3.axisBottom(x)
+            //         .tickValues([heatmaps.year])
+            //         .tickFormat(x => x)
+            //         .tickSize(-RectsHeight-margin.bottom))
+            //         .style("color","red")
+            //     .call(g => g.select(".tick text")
+            //         .attr("dy","1.5em")
+            //         .clone()
+            //         .attr("dy", "3em")
+            //         .style("font-weight", "bold")
+            //         .text("Columbine Event"))
+            //     .call(g => g.select(".domain").remove())
+            // xAxis_2003 = x_axis
+            // .append("g")
+            // // .style("opacity",0)
+            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            // .call(d3.axisBottom(x)
+            //         .tickValues([2003])
+            //         .tickFormat(x => x)
+            //         .tickSize(-RectsHeight-margin.bottom))
+            //         .style("color","red")
+            //     .call(g => g.select(".tick text")
+            //         .attr("dy","1.5em")
+            //         .clone()
+            //         .attr("dy", "3em")
+            //         .style("font-weight", "bold")
+            //         .text("Columbine Event"))
+            //     .call(g => g.select(".domain").remove())
         }
 
         if (map_g) {
             map_g.attr('opacity', 0);
             map_text_g.attr('opacity', 0);
             circle_g.attr('opacity', 0);
-            
-            // d3.select("#intro").style("opacity", 0);
         }
         if(map_count_g){
             map_count_g.attr('opacity', 0);
@@ -840,8 +702,8 @@ function scrollVis(){
         if(heat_state_g){
             heat_state_g.attr('opacity', 0);
             legend.attr('opacity', 0);
-        }
 
+        }
 
         // line chart
         
@@ -869,7 +731,6 @@ function scrollVis(){
                 .attr("stroke-width", 1)
                 .attr("d", line)
                 .attr('class', 'age-line')
-                // .call(transition);
 
             // Add x-axis
             line_g.append("g")
@@ -902,9 +763,6 @@ function scrollVis(){
         if (line_g) {
             line_g.attr('opacity', 0)
         }
-
-
-
         // pie chart
         var deceasedColor = d3.scaleOrdinal(['#d8e2dc', '#d8e2dc', '#ffcad4', '#cbcbcb']);
         var shootingColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#cbcbcb']);
@@ -1062,9 +920,6 @@ function scrollVis(){
             weapon_pie_g.attr('opacity', 0);
         }
 
-
-
-
     };
 
     /**
@@ -1075,8 +930,7 @@ function scrollVis(){
      *
      */
     var setupSections = function () {
-        // activateFunctions are called each
-        // time the active section changes
+
         activateFunctions[0] = showTitle;
         activateFunctions[1] = showMap;
         activateFunctions[2] = showMapDots;
@@ -1102,22 +956,11 @@ function scrollVis(){
         .duration(0)
         .attr('opacity', 1);
 
-        // d3.select("#intro").attr("opacity", 0);
         hideMap(map_g);
         hideMaptext(map_text_g);
         hideMapcount(map_count_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g)
-    }
-    /**
-     * showIntro - show introduction
-     *
-     * hides: Topic title
-     * shows: intro title
-     *
-     */
-    function showIntro(){
-
     }
     /**
      * showMap - draw the map
@@ -1133,10 +976,6 @@ function scrollVis(){
         .attr('opacity', 0);
 
         if (map_g) {
-            // d3.select("#intro")
-            // .transition()
-            // .duration(1000)
-            // .style("opacity", 1);
             map_g
             .transition()
             .duration(600)
@@ -1158,7 +997,6 @@ function scrollVis(){
             .attr('opacity', 1.0)
         }
         hideMapcount(map_count_g);
-
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g )
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g)
@@ -1170,7 +1008,6 @@ function scrollVis(){
             map_g
             .transition()
             .style("fill","#E5E4E2")
-
             circle_g
             .transition()
             .duration(1000)
@@ -1198,7 +1035,6 @@ function scrollVis(){
                     return "#E5E4E2"
                 };
             })
-
         }
         if (map_text_g) {
             map_text_g
@@ -1212,8 +1048,6 @@ function scrollVis(){
             .duration(0)
             .attr('opacity', 1.0);
         }
-        
-
     }
 
     /**
@@ -1230,17 +1064,6 @@ function scrollVis(){
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hideLine(line_g);
-
-
-
-        // g.selectAll('.square')
-        // .transition()
-        // .duration(600)
-        // .delay(function (d) {
-        //     return 5 * d.row;
-        // })
-        // .attr('opacity', 1.0)
-        // .attr('fill', '#ddd');
     }
     function showHeatState() {
         hideMap(map_g);
@@ -1261,193 +1084,32 @@ function scrollVis(){
             .transition()
             .duration(2000)
             .attr('opacity', 1.0);
-                            
-            // rects.transition()
-            //     .duration(2000)
-            //     .attr('opacity', 1.0)
-            //     .style("fill",(d,i)=> {return color_event(d.value)})
+                   
+            const rowHeight = 30;
+            const RectsHeight = rowHeight * heatmaps_state.highStates.length + margin.top + margin.bottom;
 
+            // Update y-axis scale domain
+            y.domain(heatmaps_state.highStates)
+            .range([height/4+20, height/4+RectsHeight+20 - margin.bottom])
+            y_axis.transition()
+            .duration(6000)
+            .call(d3.axisLeft(y).tickSize(0))
+            .call(g => g.select(".domain").remove())
+            x_axis.transition()
+            .duration(6000)
+            .attr("transform", `translate(0,${height/4-height/15-10})`)
 
-        }
-
+            heat_state_g.selectAll("#long_rects")
+            .data(heatmaps_state.twoDArray)
+            .transition()
+            .duration(6000)
+            .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])})`)
+            heat_state_g.selectAll("#small_rects")
+            .attr("height", y.bandwidth()-1)
+        } 
     }
-    /**
-     * highlightGrid - show fillers in grid
-     *
-     * hides: barchart, text and axis
-     * shows: square grid and highlighted
-     *  filler words. also ensures squares
-     *  are moved back to their place in the grid
-     */
-    // function highlightGrid() {
-    //     hideHeat(heat_g,legend,rects,xAxis_1999,xAxis_2003);
-    //     hideMaptext(map_text_g);
-    //     hidePie(pie_g);
-    //     hideLine(line_g);
+   
 
-    //     g.selectAll('.bar .pie')
-    //     .transition()
-    //     .duration(600)
-    //     .attr('width', 0);
-
-    //     g.selectAll('.bar-text')
-    //     .transition()
-    //     .duration(0)
-    //     .attr('opacity', 0);
-
-
-    //     g.selectAll('.square')
-    //     .transition()
-    //     .duration(0)
-    //     .attr('opacity', 1.0)
-    //     .attr('fill', '#ddd');
-
-    //     // use named transition to ensure
-    //     // move happens even if other
-    //     // transitions are interrupted.
-    //     g.selectAll('.fill-square')
-    //     .transition('move-fills')
-    //     .duration(800)
-    //     .attr('x', function (d) {
-    //         return d.x;
-    //     })
-    //     .attr('y', function (d) {
-    //         return d.y;
-    //     });
-
-    //     g.selectAll('.fill-square')
-    //     .transition()
-    //     .duration(800)
-    //     .attr('opacity', 1.0)
-    //     .attr('fill', function (d) { return d.filler ? '#008080' : '#ddd'; });
-    // }
-
-    /**
-     * showBar - barchart
-     *
-     * hides: square grid
-     * hides: histogram
-     * shows: barchart
-     *
-     */
-    // function showBar() {
-    //     // ensure bar axis is set
-
-    //     hideHeat(heat_g,legend,rects,xAxis_1999,xAxis_2003);
-    //     hideMaptext(map_text_g);
-    //     hidePie(pie_g);
-    //     hideLine(line_g);
-
-    //     g.selectAll('.square')
-    //     .transition()
-    //     .duration(800)
-    //     .attr('opacity', 0);
-
-    //     g.selectAll('.fill-square')
-    //     .transition()
-    //     .duration(800)
-    //     .attr('x', 0)
-    //     .attr('y', function (d, i) {
-    //         return yBarScale(i % 3) + yBarScale.bandwidth() / 2;
-    //     })
-    //     .transition()
-    //     .duration(0)
-    //     .attr('opacity', 0);
-
-    //     g.selectAll('.hist')
-    //     .transition()
-    //     .duration(600)
-    //     .attr('height', function () { return 0; })
-    //     .attr('y', function () { return height; })
-    //     .style('opacity', 0);
-
-    //     g.selectAll('.bar .pie')
-    //     .transition()
-    //     .delay(function (d, i) { return 300 * (i + 1);})
-    //     .duration(600)
-    //     .attr('width', function (d) { return xBarScale(d.value); });
-
-    //     g.selectAll('.bar-text')
-    //     .transition()
-    //     .duration(600)
-    //     .delay(1200)
-    //     .attr('opacity', 1);
-    // }
-
-    /**
-     * showHistPart - shows the first part
-     *  of the histogram of filler words
-     *
-     * hides: barchart
-     * hides: last half of histogram
-     * shows: first half of histogram
-     *
-     */
-    // function showHistPart() {
-    //     // switch the axis to histogram one
-    //     // hideAxis();
-    //     hidePie(pie_g);
-    //     hideHeat(heat_g,legend,rects,xAxis_1999,xAxis_2003);
-    //     hideMaptext(map_text_g);
-    //     hideLine(line_g);
-
-    //     g.selectAll('.bar-text')
-    //     .transition()
-    //     .duration(0)
-    //     .attr('opacity', 0);
-
-    //     g.selectAll('.bar .pie')
-    //     .transition()
-    //     .duration(600)
-    //     .attr('width', 0);
-
-    //     // here we only show a bar if
-    //     // it is before the 15 minute mark
-    //     g.selectAll('.hist')
-    //     .transition()
-    //     .duration(600)
-    //     .attr('y', function (d) { return (d.x0 < 15) ? yHistScale(d.length) : height; })
-    //     .attr('height', function (d) { return (d.x0 < 15) ? height - yHistScale(d.length) : 0; })
-    //     .style('opacity', function (d) { return (d.x0 < 15) ? 1.0 : 1e-6; });
-    // }
-
-    /**
-     * showHistAll - show all histogram
-     *
-     * hides: cough title and color
-     * (previous step is also part of the
-     *  histogram, so we don't have to hide
-     *  that)
-     * shows: all histogram bars
-     *
-     */
-    // function showHistAll() {
-    //     // ensure the axis to histogram one
-    //     // hideAxis();
-    //     hidePie();
-    //     hideHeat();
-    //     hideMaptext();
-    //     hideLine();
-
-    //     g.selectAll('.cough')
-    //     .transition()
-    //     .duration(0)
-    //     .attr('opacity', 0);
-
-    //     // named transition to ensure
-    //     // color change is not clobbered
-    //     g.selectAll('.hist')
-    //     .transition('color')
-    //     .duration(500)
-    //     .style('fill', '#008080');
-
-    //     g.selectAll('.hist')
-    //     .transition()
-    //     .duration(1200)
-    //     .attr('y', function (d) { return yHistScale(d.length); })
-    //     .attr('height', function (d) { return height - yHistScale(d.length); })
-    //     .style('opacity', 1.0);
-    // }
 
     function showPie() {
         
@@ -1476,24 +1138,6 @@ function scrollVis(){
             .attr('opacity', 1.0);
         }
 
-        // g.selectAll('.cough')
-        // .transition()
-        // .duration(0)
-        // .attr('opacity', 0);
-
-        // // named transition to ensure
-        // // color change is not clobbered
-        // g.selectAll('.hist')
-        // .transition('color')
-        // .duration(500)
-        // .style('fill', '#008080');
-
-        // g.selectAll('.hist')
-        // .transition()
-        // .duration(1200)
-        // .attr('y', function (d) { return yHistScale(d.length); })
-        // .attr('height', function (d) { return height - yHistScale(d.length); })
-        // .style('opacity', 1.0);
     }
 
     function showLine() {
@@ -1524,24 +1168,6 @@ function scrollVis(){
             
         }
 
-        // g.selectAll('.cough')
-        // .transition()
-        // .duration(0)
-        // .attr('opacity', 0);
-
-        // // named transition to ensure
-        // // color change is not clobbered
-        // g.selectAll('.hist')
-        // .transition('color')
-        // .duration(500)
-        // .style('fill', '#008080');
-
-        // g.selectAll('.hist')
-        // .transition()
-        // .duration(1200)
-        // .attr('y', function (d) { return yHistScale(d.length); })
-        // .attr('height', function (d) { return height - yHistScale(d.length); })
-        // .style('opacity', 1.0);
     }
 
     /**
@@ -1589,22 +1215,22 @@ function scrollVis(){
      * @param progress - 0.0 - 1.0 -
      *  how far user has scrolled in section
      */
-    function updateCough(progress) {
-        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+    // function updateCough(progress) {
+    //     hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         
-        hideHeat();
-        g.selectAll('.cough')
-        .transition()
-        .duration(0)
-        .attr('opacity', progress);
+    //     hideHeat();
+    //     g.selectAll('.cough')
+    //     .transition()
+    //     .duration(0)
+    //     .attr('opacity', progress);
 
-        g.selectAll('.hist')
-        .transition('cough')
-        .duration(0)
-        .style('fill', function (d) {
-            return (d.x0 >= 14) ? coughColorScale(progress) : '#008080';
-        });
-    }
+    //     g.selectAll('.hist')
+    //     .transition('cough')
+    //     .duration(0)
+    //     .style('fill', function (d) {
+    //         return (d.x0 >= 14) ? coughColorScale(progress) : '#008080';
+    //     });
+    // }
 
 
    
@@ -1645,9 +1271,6 @@ function scrollVis(){
  * displays the visualization.
  */
 function display(data) {
-    // create a new plot and
-    // display it
-    // let data = this.data;
     var plot = scrollVis();
     d3.select('#vis')
         .datum(data)
@@ -1662,11 +1285,9 @@ function display(data) {
 
     // setup event handling
     myscroll.on('active', function (index) {
-        // highlight current step text
         d3.selectAll('.step')
         .style('opacity', function (d, i) { return i === index ? 1 : 0.1; });
 
-        // activate current section
         plot.activate(index);
     });
 
@@ -1721,46 +1342,7 @@ function display(data) {
 
 }
 
-.low{
-    color: black;
-    background-color: #fee5d9;
-    opacity:1.0;
-  }
-  .medium {
-    color: black;
-    background: #fcae91;
-  }
-  .high {
-    color: black;
-    background: #fb6a4a;
-  }
-  .very_high{
-    color: black;
-    background: #cb181d; 
-  }
-/* 
-#vis .sub-title {
-  font-size:80px;
-  text-anchor: middle;
-}
 
-.axis path,
-.axis line {
-  fill: none;
-  stroke: #666;
-  shape-rendering: crispEdges;
-}
-
-.highlight {
-  fill: #008080;
-  font-weight: bold;
-}
-
-.cough-arrow {
-  stroke: #000;
-  stroke-width: 4px;
-
-} */
 
 
 
