@@ -23,21 +23,16 @@
                 From 1999 to 2023 we found out that California (40), Texas (25), Florida (24), and North Carolina (21).
             </section>
             <section class="step boarder">
+                <div class="title">Screenshot</div>
+                Screenshot
+            </section>
+            <section class="step boarder">
                 <div class="title">Heat Map</div>
-                Break down the number of events into individual years, aiming to find out what is happening during the high occurrence year.
-                the color represents the number of shooting events that happened in each group in each year. 
+                Heat Map description
             </section>
             <section class="step boarder">
-                <div class="title">Line Chart</div>
-                Line Chart description
-            </section>
-            <section class="step boarder">
-                <div class="title">Line Chart</div>
-                Line Chart description
-            </section>
-            <section class="step boarder">
-                <div class="title">Line Chart</div>
-                Line Chart description
+                <div class="title">Heat Map Takeaway</div>
+                Heat Map Takeaway
             </section>
             <section class="step boarder">
                 <div class="title">Line Chart</div>
@@ -48,6 +43,10 @@
                 1. Where did they get the weapon?<br>
                 2. Did they commit suicide after shooting?<br>
                 3. Did they shoot others on purpose?
+            </section>
+            <section class="step boarder">
+                <div class="title">Takeaway</div>
+                Takeaway
             </section>
         </div>
         <div id='vis'>
@@ -1082,22 +1081,16 @@ function scrollVis(){
         activateFunctions[1] = showMap;
         activateFunctions[2] = showMapDots;
         activateFunctions[3] = showMapGradient;
-        activateFunctions[4] = showHeat;
+        activateFunctions[4] = showHeat; // empty page
         activateFunctions[5] = showHeatState;
-        activateFunctions[6] = showLine;
-        activateFunctions[7] = showPie;
+        activateFunctions[6] = showHeat;
+        activateFunctions[7] = showLine;
+        activateFunctions[8] = showPie;
+        activateFunctions[9] = showHeat;
 
-
-        // updateFunctions are called while
-        // in a particular section to update
-        // the scroll progress in that section.
-        // Most sections do not need to be updated
-        // for all scrolling and so are set to
-        // no-op functions.
-        for (var i = 0; i < 9; i++) {
+        for (var i = 0; i < 10; i++) {
             updateFunctions[i] = function () {};
         }
-        // updateFunctions[7] = updateCough;
     };
 
     /**
