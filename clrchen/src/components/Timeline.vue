@@ -36,7 +36,9 @@
             </section>
             <section class="step boarder">
                 <div class="title">Line Chart</div>
-                Line Chart description
+                The y-axis represents the trend of the age of young shooters, and the x-axis represents years from 1999 to 2023.
+                <div class="title">We found that the age of young shooters is decreasing.</div>
+                2023 even has the lowest age that the young shooter is only 7 year-old.
             </section>
             <section class="step boarder">
                 <div class="title">Background Information of the Young Shooters</div>
@@ -63,7 +65,7 @@ import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
 import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie} from "./hidecomponent"
-import { line, map, pie, sort } from "d3";
+import { filter, line, map, pie, sort } from "d3";
 import { h } from "vue";
 
 
@@ -304,13 +306,21 @@ function filteredPieChartData(data) {
 // for line chart
 function getShooterAgeData(data) {
     let filteredData = filteredPieChartData(data)
-  let yearsData = groupBy(filteredData, 'year')
-  const averageAges = Object.entries(yearsData).map(([year, data]) => {
-    const totalAge = data.reduce((sum, obj) => obj.age_shooter ? sum + obj.age_shooter : sum, 0);
-    const averageAge = totalAge / data.length || 0; // To avoid division by zero
-    return { year: parseInt(year), age: Math.round(averageAge) };
-  });
-  return averageAges;
+    let acc = 0;
+    let len = filteredData.length;
+    filteredData.map((data) => {
+        if (data.age_shooter) {
+            acc += data.age_shooter;
+        }
+    })
+    let avg = Math.round(acc / len);
+    let yearsData = groupBy(filteredData, 'year')
+    const averageAges = Object.entries(yearsData).map(([year, data]) => {
+        const totalAge = data.reduce((sum, obj) => obj.age_shooter ? sum + obj.age_shooter : sum, 0);
+        const averageAge = totalAge / data.length || 0; // To avoid division by zero
+        return { year: parseInt(year), age: Math.round(averageAge), average: avg};
+    });
+    return averageAges;
 }
 // for pie chart
 function getDeceasedData(data) {
@@ -422,6 +432,7 @@ let shootingPieData = null;
 let weaponPieData = null;
 let lineChartData = null;
 let ageLine = null;
+let avgLine = null;
 
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
@@ -848,16 +859,21 @@ function scrollVis(){
         if (lineChartData) {
             const x = d3.scaleLinear()
                 .domain(d3.extent(lineChartData, d => d.year))
-                .range([margin.left+50, width - margin.right-50]);
+                .range([margin.left+50, width - margin.right - 50]);
             
             const y = d3.scaleLinear()
-                .domain([0, d3.max(lineChartData, d => d.age)])
-                .range([height - margin.top, margin.bottom]);
+                .domain([0, d3.max(lineChartData, d => d.age) + 1])
+                .range([height - margin.top, margin.bottom + 10]);
             
             // Define the line function
             const line = d3.line()
                 .x(d => x(d.year))
                 .y(d => y(d.age));
+
+            // Define the line function
+            const avgAgeLine = d3.line()
+                .x(d => x(d.year))
+                .y(d => y(d.average));
 
             line_g = g.append("g")
             
@@ -866,10 +882,83 @@ function scrollVis(){
                 .datum(lineChartData)
                 .attr("fill", "none")
                 .attr("stroke", "steelblue")
-                .attr("stroke-width", 1)
+                .attr("stroke-width", 3)
                 .attr("d", line)
+                .attr("transform",  `translate(0, -${margin.bottom})`)
                 .attr('class', 'age-line')
-                // .call(transition);
+
+            // const yExtents = d3.extent(lineChartData, d => d.age);
+            // line_g.selectAll(".dot")
+            //     .data(lineChartData)
+            //     .enter().append("circle")
+            //     .attr("class", "dot")
+            //     .attr("cx", d => x(d.year))
+            //     .attr("cy", d => y(d.age))
+            //     .attr("transform",  `translate(0, -${margin.bottom})`)
+            //     .attr('r', function (d) { 
+            //         return d.age == yExtents[0] || d.age == yExtents[1] ? 5 : 0;
+            //     })
+            //     .attr("fill", "red");
+
+            // Draw the average line
+            avgLine = line_g.append("path")
+                .datum(lineChartData)
+                .attr("fill", "none")
+                .attr("stroke", "green")
+                .attr("stroke-width", 1)
+                .attr("d", avgAgeLine)
+                .attr("transform",  `translate(0, -${margin.bottom})`)
+                .attr('class', 'average-line')
+            
+            // Draw the average text
+            line_g.append("g")
+                .attr("transform",  `translate(${width - 90}, ${height / 2 - 70})`)
+                .append("text")
+                .style("font-size", 12)
+                .style("fill", "green")
+                .text("Average: 14")
+                .style("text-anchor", "middle")
+
+            // Draw the triangle mark
+            var sym = d3.symbol().type(d3.symbolTriangle).size(100); 
+            line_g.append("path") 
+                .attr("d", sym) 
+                .attr("fill", "red") 
+                .attr("transform", `translate(${width - 60}, ${height / 2 + 85}) rotate(180)`);
+
+            // Draw the lowest age text
+            line_g.append("g")
+                .attr("transform",  `translate(${width - 65}, ${height / 2 + 70})`)
+                .append("text")
+                .style("font-size", 15)
+                .style("fill", "red")
+                .style("font-weight", "bold")
+                .text("Age: 7")
+                .style("text-anchor", "middle")
+
+            line_g.append("path") 
+                .attr("d", sym) 
+                .attr("fill", "red") 
+                .attr("transform", `translate(${width / 2.5 + 15}, ${height / 12 - 20}) rotate(-90)`);
+
+            // Draw the highest age text
+            line_g.append("g")
+                .attr("transform",  `translate(${width / 2.5 + 55}, ${height / 12 - 15})`)
+                .append("text")
+                .style("font-size", 15)
+                .style("fill", "red")
+                .style("font-weight", "bold")
+                .text("Age: 23")
+                .style("text-anchor", "middle")
+
+
+            // avgAgeLine = line_g.append("path")
+            //     .datum(lineChartData)
+            //     .attr("fill", "none")
+            //     .attr("stroke", "steelblue")
+            //     .attr("stroke-width", 3)
+            //     .attr("d", line)
+            //     .attr('class', 'age-line')
 
             // Add x-axis
             line_g.append("g")
@@ -897,6 +986,49 @@ function scrollVis(){
                 .attr("y", margin.top + 25)
                 .style("font-size", 15)
                 .text("Age");
+
+            // Words
+            line_g.append("g")
+                .attr("transform",  `translate(${margin.left + 100}, ${height - 180})`)
+                .append("text")
+                .style("font-size", 14)
+                .style("fill", "grey")
+                .text("There could be various factors contributing to a decrease in the age of young shooters involved in school")
+            // Words
+            line_g.append("g")
+                .attr("transform",  `translate(${margin.left + 100}, ${height - 160})`)
+                .append("text")
+                .style("font-size", 14)
+                .style("fill", "grey")
+                .text("shooting events over time. The factors may involve Access to Firearms, Mental Health, Copycat Behavior.")
+            // Words
+            line_g.append("g")
+                .attr("transform",  `translate(${margin.left + 100}, ${height - 140})`)
+                .append("text")
+                .style("font-size", 14)
+                .style("fill", "grey")
+                .text("Accessibility to firearms among younger individuals might have increased.")
+            
+            // Words
+            line_g.append("g")
+                .attr("transform",  `translate(${margin.left + 100}, ${height - 120})`)
+                .append("text")
+                .style("font-size", 14)
+                .style("fill", "grey")
+                .text("There might be a rise in mental health issues or social challenges affecting younger generations.")
+
+            // Words
+            line_g.append("g")
+                .attr("transform",  `translate(${margin.left + 100}, ${height - 100})`)
+                .append("text")
+                .style("font-size", 14)
+                .style("fill", "grey")
+                .text("Media coverage and publicized incidents might influence copycat behavior among younger individuals.")
+
+
+                
+
+
         }
 
         if (line_g) {
@@ -942,7 +1074,7 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => deceasedPieData[i].name)
-                .style("font-size", 8)
+                .style("font-size", 10)
                 .attr("fill", "black");
 
             arcs.append("text")
@@ -1511,6 +1643,8 @@ function scrollVis(){
             .attr('opacity', 1.0);
 
             ageLine.call(transition);
+
+            avgLine.call(transition);
 
 
             // line_g.append("path")
