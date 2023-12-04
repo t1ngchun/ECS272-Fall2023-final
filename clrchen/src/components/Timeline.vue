@@ -17,10 +17,11 @@
             </section>
             <section class="step boarder">
                 <div class="title">The Columbine Shooting Event triggers a lots of school shooting events.</div>
-                We divide the states in the US into four regions(<span class="low"> Low </span>,<span class="medium"> Moderate </span>,<span class="high"> High </span> 
-                and<span class="very_high"> Very High </span>). According to the frequency of events occurence.
-                The map is the overview of the total count of the shooting events in each region from 1999 to 2023.
-                
+            </section>
+            <section class="step boarder">
+                <div class="title">We divide the states in the US into four regions acording to the frequency of events occurence.</div>
+                The map is the overview of the total count of the shooting events in each region from 1999 to 2023 with the four regions (<span class="low"> Low </span>,<span class="medium"> Moderate </span>,<span class="high"> High </span> 
+                and<span class="very_high"> Very High </span>).
             </section>
             <section class="step boarder">
                 <div class="title">Heat Map</div>
@@ -63,7 +64,9 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
-import { line, map } from "d3";
+
+import { line, map, sort } from "d3";
+
 
 function convertRegion(input)  {
     var regions = states.concat(provinces);
@@ -161,8 +164,9 @@ function getHeatMapData(data) {
         const values = Object.values(rearrangedObject[category]);
         return values.map(value => ({ cat: category, value: value.toString() }));
     });
+    // console.log(result)
     const numRows = 4;
-    const numColumns = 25;
+    const numColumns = years.length;
 
     // Create a 2D array
     let twoDArray = [];
@@ -176,9 +180,9 @@ function getHeatMapData(data) {
     twoDArray.push(row);
     }
 
-    const values = occurence.map(category =>
-        years.map(year => countByYearCategory[category][year] || 0)
-    );
+    // const values = occurence.map(category =>
+    //     years.map(year => countByYearCategory[category][year] || 0)
+    // );
     const values1DArray = Object.values(countByYearCategory).flatMap(yearCounts =>
         Object.values(yearCounts)
     );
@@ -191,6 +195,91 @@ function getHeatMapData(data) {
         year: 1999
     };
 }
+
+function getHeatMapData_state(data) {
+    const years = [...new Set(data.map(item => item.year))]
+    const states = [...new Set(data.map(item => item.state))]
+    const nameToOccCatMap = getOcc(data).reduce((acc, item) => {
+        acc[item.name] = item.occ_cat;
+        return acc;
+    }, {});
+    // Create an array of objects with state names and categories
+    const sortedStatesByOccurrence = states.map(state => ({
+        state,
+        category: nameToOccCatMap[state] || "Unknown" 
+    }));
+    console.log(sortedStatesByOccurrence)
+    
+    // Sort the array based on the occurrence order
+    sortedStatesByOccurrence.sort((a, b) => {
+        return (
+            occurence.indexOf(a.category) - occurence.indexOf(b.category)
+        );
+    });
+    const updatedStates = sortedStatesByOccurrence.map(item => item.state);
+    console.log(updatedStates)
+    console.log(sortedStatesByOccurrence);
+    // console.log(nameToOccCatMap)
+    const countByYearCategory = {};
+
+    data.forEach((event) => {
+        const { state, year } = event;
+        // const category = nameToOccCatMap[state];
+        
+        // Initialize count for the year if not present
+        countByYearCategory[state] = countByYearCategory[state] || {};
+        
+        // Initialize count for the category if not present
+        countByYearCategory[state][year] = (countByYearCategory[state][year] || 0) + 1;
+    });
+    years.forEach((year) => {
+        updatedStates.forEach((state) => {
+            countByYearCategory[state][year] = countByYearCategory[state][year] || 0;
+        });
+    });
+    // console.log(countByYearCategory)
+    // console.log(states.length)
+    let rearrangedObject = {};
+    updatedStates.forEach(key => {
+        rearrangedObject[key] = countByYearCategory[key];
+    });
+    const result = Object.keys(rearrangedObject).flatMap(state => {
+        const values = Object.values(rearrangedObject[state]);
+        return values.map(value => ({ state: state, value: value.toString() }));
+    });
+    // console.log(result)
+    const numRows = updatedStates.length;
+    const numColumns = years.length;
+
+    // Create a 2D array
+    let twoDArray = [];
+
+    // Iterate over rows
+    for (let i = 0; i < numRows; i++) {
+    // Extract a portion of the 1D array for each row
+    let row = result.slice(i * numColumns, (i + 1) * numColumns);
+    
+    // Push the row to the 2D array
+    twoDArray.push(row);
+    }
+
+    // const values = states.map(state =>
+    //     years.map(year => countByYearCategory[state][year] || 0)
+    // );
+    const values1DArray = Object.values(countByYearCategory).flatMap(yearCounts =>
+        Object.values(yearCounts)
+    );
+    
+    return {
+        twoDArray,
+        values1DArray,
+        sortedStatesByOccurrence,
+        updatedStates,
+        years,
+        year: 1999
+    };
+}
+// for pie chart
 
 function filteredPieChartData(data) {
     let formattedData = [];
@@ -324,10 +413,11 @@ function getWeaponData (data) {
     ];
 }
 
-  
+let convertedData = null;
 let shootings = null;
 let occurenceLegend = null;
 let heatmaps = null;
+let heatmaps_state = null;
 let deceasedPieData = null;
 let shootingPieData = null;
 let weaponPieData = null;
@@ -336,18 +426,25 @@ let ageLine = null;
 
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
-    const convertedData = loadedData.map(item => {
+    convertedData = loadedData.map(item => {
     // Convert 'year' property to a number, keep other properties unchanged
         return {
             ...item,
+            long: +item.long,
+            lat: +item.lat,
             year: !isNaN(item.year) ? +item.year : item.year
         };
     });
-    // console.log(convertedData)
+    console.log(convertedData)
     shootings = getOcc(loadedData);
-    console.log(occurenceLegend)
     heatmaps = getHeatMapData(convertedData)
+
+    heatmaps_state = getHeatMapData_state(convertedData)
+    display(convertedData)
+
     display(shootings)
+    display(heatmaps)
+    display(heatmaps_state)
 
     lineChartData = getShooterAgeData(loadedData)
     display(lineChartData)
@@ -377,6 +474,10 @@ d3.json('../../data/states-albers-10m.json')
     // Handle error if data loading fails
     console.error('Error loading data:', error);
   });
+let gun = null;
+d3.xml('../../data/gun-svgrepo-com.svg').then(svgData => {
+    gun = svgData
+});
 /*
  * scrollVis - encapsulates
  * all the code for the visualization
@@ -442,6 +543,8 @@ function scrollVis(){
             g = svg.select('g')
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
             
+
+                
             setupVis();
             setupSections();
         });
@@ -452,13 +555,13 @@ function scrollVis(){
     let map_text_g = null;
     let map_g = null;
     let map_legend = null;
-    let map_legend_text1 = null;
-    let map_legend_text2 = null;
     let heat_g = null;
+    let heat_state_g = null;
     let deceased_pie_g = null;
     let shooting_pie_g = null;
     let weapon_pie_g = null;
     let rects = null;
+    let heat_rects = null;
     let legend = null;
     let xAxis_1999 = null;
     let xAxis_2003 = null;
@@ -470,7 +573,9 @@ function scrollVis(){
     const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
     // for heatmap
     const color_event = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps.values1DArray)])
-    const color_occurence = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
+    // const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
+    // for each state heatmap
+    const color_state = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps_state.values1DArray)])
     /**
      * setupVis - creates initial elements for all
      * sections of the visualization.
@@ -504,7 +609,7 @@ function scrollVis(){
 
         // draw the map
         if (us) {
-            // let us_states = topojson.feature(us, us.objects.states).features
+
             let path = d3.geoPath()
             map_g = g.append("g")            
             .selectAll("path")
@@ -514,7 +619,21 @@ function scrollVis(){
             .attr("d", path)
             .attr("stroke", "black")
             .attr("fill", "#E5E4E2")
-
+            let projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305]);
+            // Adding circles
+            g.append("g")            
+            .selectAll("circle")
+            .data(convertedData.filter(d=>d.long!=0 && d.lat!=0))
+            .enter()
+            .append("circle")        
+            .attr("cx", d => {
+                return projection([d.long,d.lat])[0];
+            })
+            .attr("cy", d => {
+                return projection([d.long,d.lat])[1];
+            })
+            .attr("r", 2)
+            .attr("fill", "red"); 
             // Adding text labels
             map_text_g = g.append("g")
             .selectAll("text")
@@ -534,7 +653,6 @@ function scrollVis(){
             .style("font-size", "10px") 
             .style("fill", "black");
 
-            // map_legend = g.append("g")
             let legendElementWidth = 30
             let legendHeight = 20      
             map_legend = g.append("g")
@@ -549,7 +667,7 @@ function scrollVis(){
                         .attr("y", height - (2*legendHeight))
                         .attr("width", legendElementWidth)
                         .attr("height", legendHeight)
-                        .style("fill", d => color_occurence(d.category));
+                        .style("fill", d => color_gradient(d.category));
             map_legend.append("g")
                         .attr("transform", d => `translate(0,+${height*0.01})` )
                         .selectAll("text")
@@ -559,7 +677,6 @@ function scrollVis(){
                         .text(d => parseInt(d.range[1]) )
                         .attr("x", (d, i) => legendElementWidth * (i+1)-5)
                         .attr("y", height - (legendHeight / 2)+5)
-                        // .style("font-size", "1rem")
                         .style("fill", "#A4A4A4")
                         .style('font-weight', 'bold')
             map_legend.append("g")
@@ -573,6 +690,7 @@ function scrollVis(){
                         .style('font-weight', 'bold')
         }
         if(heatmaps){
+            // console.log(heatmaps)
             heat_g = g.append("g")
             const rowHeight = 50;
             const RectsHeight = rowHeight * heatmaps.occurence.length + margin.top + margin.bottom;
@@ -603,7 +721,7 @@ function scrollVis(){
                     .attr("x", (d, i) => x(heatmaps.years[i]) + 1)
                     .attr("width", (d, i) => x(heatmaps.years[i] + 1) - x(heatmaps.years[i]) - 1)
                     .attr("height", y.bandwidth()-1)
-                    .attr("fill", d => {return color_occurence(d.cat)})
+                    .attr("fill", d => {return color_gradient(d.cat)})
 
                         
             xAxis_1999 = x_axis
@@ -667,7 +785,7 @@ function scrollVis(){
                     .attr("stop-color", color_event(domainValues[0] + step * i));
             }
 
-            let legend_rect = legend.append("rect")
+            legend.append("rect")
                 .attr("x", 0)
                 .attr("y", 0)
                 .attr("width", legendWidth)
@@ -709,6 +827,114 @@ function scrollVis(){
                 .style("fill", "#A4A4A4")
                 .style('font-weight', 'bold');
         }
+        if(heatmaps_state){
+            // console.log(heatmaps_state)
+            heat_state_g = g.append("g")
+            const rowHeight = 12;
+            const RectsHeight = rowHeight * heatmaps_state.updatedStates.length + margin.top + margin.bottom;
+            const x = d3.scaleLinear()
+                .domain([d3.min(heatmaps_state.years), d3.max(heatmaps_state.years) + 1])
+                .range([margin.left+width/6, (width-margin.right-30)/1.1])
+            const y = d3.scaleBand()
+                .domain(heatmaps_state.updatedStates)
+                .rangeRound([height/15, height/15+RectsHeight - margin.bottom])
+            
+            const x_axis = heat_state_g.append("g")
+                .call(g => g.append("g")
+                    .attr("transform", `translate(0,${height/15})`)
+                    .call(d3.axisTop(x).tickValues(heatmaps_state.years).ticks(null, "d"))
+                    .call(g => g.select(".domain").remove()))
+            const y_axis = heat_state_g.append("g")
+                .attr("transform", `translate(${margin.left+width/6},0)`)
+                .call(d3.axisLeft(y).tickSize(0))
+                .call(g => g.select(".domain").remove());
+            heat_rects = heat_state_g.append("g")
+                .selectAll("g")
+                .data(heatmaps_state.twoDArray)
+                .join("g")
+                    .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])})`)
+                .selectAll("rect")
+                .data(d => d)
+                .join("rect")
+                    .attr("x", (d, i) => x(heatmaps_state.years[i]) + 1)
+                    .attr("width", (d, i) => x(heatmaps_state.years[i] + 1) - x(heatmaps_state.years[i]) - 1)
+                    .attr("height", y.bandwidth()-1)
+                    .attr("fill", d => {return color_state(d.value)})
+
+                        
+            
+
+
+
+            // legend
+
+            // const legendWidth = 300;
+            // const legendHeight = 15;
+            // const numColorSteps = 100; 
+
+            // legend = heat_state_g.append("g")
+            //     .attr("class", "legend")
+            //     .attr("transform", `translate(${margin.left + 5}, ${height / 5})`);
+
+            // const defs = legend.append("defs");
+            // const linearGradient = defs.append("linearGradient")
+            //     .attr("id", "legendGradient")
+            //     .attr("x1", "0%")
+            //     .attr("y1", "0%")
+            //     .attr("x2", "100%")
+            //     .attr("y2", "0%");
+
+            // const domainValues = color_event.domain();
+            // const step = (domainValues[1] - domainValues[0]) / numColorSteps;
+            // for (let i = 0; i <= numColorSteps; i++) {
+            //     linearGradient.append("stop")
+            //         .attr("offset", `${(i * 100) / numColorSteps}%`)
+            //         .attr("stop-color", color_event(domainValues[0] + step * i));
+            // }
+
+            // legend.append("rect")
+            //     .attr("x", 0)
+            //     .attr("y", 0)
+            //     .attr("width", legendWidth)
+            //     .attr("height", legendHeight)
+            //     .style("fill", "url(#legendGradient)");
+
+            // const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
+
+            // const positionsInLegend = colorRange.map(value => {
+            //     const mappedPosition = ((value - color_event.domain()[0]) / (color_event.domain()[1] - color_event.domain()[0])) * legendWidth;
+            //     return mappedPosition;
+            // });
+
+
+            // const lengendValPos = colorRange.map((value, index) => {
+            //     return {
+            //         value: parseInt(value.toFixed(1)),
+            //         position: positionsInLegend[index]
+            //     };
+            // });
+
+            // legend.selectAll("line.quantile")
+            //     .data(lengendValPos)
+            //     .enter().append("line")
+            //     .attr("class", "quantile")
+            //     .attr("x1", d => (d.position))
+            //     .attr("y1", -3)
+            //     .attr("x2", d => (d.position))
+            //     .attr("y2", legendHeight+3)
+            //     .style("stroke", "#A4A4A4")
+            //     .style("stroke-width", 1);
+
+            // legend.selectAll("text")
+            //     .data(lengendValPos) // You can choose specific values to display on the legend
+            //     .enter().append("text")
+            //     .attr("x", d => (d.position-5))
+            //     .attr("y", legendHeight + 20)
+            //     .text(d => (d.value))
+            //     .style("fill", "#A4A4A4")
+            //     .style('font-weight', 'bold');
+        }
+
         if (map_g) {
             map_g.attr('opacity', 0);
             map_text_g.attr('opacity', 0);
@@ -726,6 +952,11 @@ function scrollVis(){
         if(heat_g){
             heat_g.attr('opacity', 0);
         }
+
+        if(heat_state_g){
+            heat_state_g.attr('opacity', 0);
+        }
+
 
         // line chart
         
@@ -786,6 +1017,7 @@ function scrollVis(){
         if (line_g) {
             line_g.attr('opacity', 0)
         }
+
 
 
         // pie chart
@@ -954,10 +1186,13 @@ function scrollVis(){
         // time the active section changes
         activateFunctions[0] = showTitle;
         activateFunctions[1] = showMap;
-        activateFunctions[2] = showMapGradient;
-        activateFunctions[3] = showHeat;
-        activateFunctions[4] = showLine;
-        activateFunctions[5] = showPie;
+        activateFunctions[2] = showMapDots;
+        activateFunctions[3] = showMapGradient;
+        activateFunctions[4] = showHeat;
+        activateFunctions[5] = showHeatState;
+        activateFunctions[6] = showLine;
+        activateFunctions[7] = showPie;
+
 
         // updateFunctions are called while
         // in a particular section to update
@@ -984,6 +1219,7 @@ function scrollVis(){
         hideMap();
         hideMaptext();
         hideHeat();
+        hideHeatState();
     }
     /**
      * showIntro - show introduction
@@ -1044,8 +1280,17 @@ function scrollVis(){
 
         hidePie();
         hideHeat();
+        hideHeatState();
     }
-
+    function showMapDots(){
+        hideHeat();
+        hidePie();
+        if(map_g){
+            map_g
+            .transition()
+            .style("fill","#E5E4E2")
+        }
+    }
     /**
      * showMapGradient
      *
@@ -1106,8 +1351,9 @@ function scrollVis(){
         hideMap();
         hideMaptext();
         hidePie();
+        hideHeatState();
         hideLine();
-        
+
         if (heat_g) {
             heat_g
             .transition()
@@ -1141,7 +1387,43 @@ function scrollVis(){
         // .attr('opacity', 1.0)
         // .attr('fill', '#ddd');
     }
+    function showHeatState() {
+        hideMap();
+        hideMaptext();
+        hidePie();
+        hideHeat();
+        
+        if (heat_state_g) {
+            heat_state_g
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1.0);
+            heat_rects
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1.0)
+            // legend
+            // .transition()
+            // .duration(2000)
+            // .attr('opacity', 1.0);
+                            
+            // rects.transition()
+            //     .duration(2000)
+            //     .attr('opacity', 1.0)
+            //     .style("fill",(d,i)=> {return color_event(d.value)})
 
+
+        }
+
+        // g.selectAll('.square')
+        // .transition()
+        // .duration(600)
+        // .delay(function (d) {
+        //     return 5 * d.row;
+        // })
+        // .attr('opacity', 1.0)
+        // .attr('fill', '#ddd');
+    }
     /**
      * highlightGrid - show fillers in grid
      *
@@ -1480,6 +1762,20 @@ function scrollVis(){
         }
 
     }
+    function hideHeatState() {
+        if (heat_state_g) {
+            heat_state_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);
+            heat_rects
+            .transition()
+            .duration(0)
+            .attr('opacity', 0);  
+                     
+        }
+
+    }
 
     function hidePie() {
         if (deceased_pie_g) {
@@ -1643,14 +1939,11 @@ function display(data) {
   width: 270px;
   z-index: 90;
   padding-bottom: 300px; 
-  /* add space for the last section */
 }
 #vis {
   display: inline-block;
   position: fixed;
   z-index: 1;
-  /* margin-right: 10px; */
-  /* flex:5; */
 }
 .step {
   margin-bottom: 300px;
