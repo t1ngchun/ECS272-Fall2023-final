@@ -732,7 +732,7 @@ function scrollVis(){
         if (lineChartData) {
             const x = d3.scaleLinear()
                 .domain(d3.extent(lineChartData, d => d.year))
-                .range([margin.left, width - margin.right]);
+                .range([margin.left+50, width - margin.right-50]);
             
             const y = d3.scaleLinear()
                 .domain([0, d3.max(lineChartData, d => d.age)])
@@ -768,7 +768,7 @@ function scrollVis(){
             
             // Add y-axis
             line_g.append("g")
-                .attr("transform",  `translate(${margin.left}, ${- margin.bottom / 2})`)
+                .attr("transform",  `translate(${margin.left+50}, ${- margin.bottom})`)
                 .call(d3.axisLeft(y))
                 .selectAll("text")
                 .style("text-anchor", "end")
@@ -776,16 +776,9 @@ function scrollVis(){
             
             // Add labels
             line_g.append("text")
-                .attr("x", width / 2)
-                .attr("y", height)
-                .style("text-anchor", "middle")
-                .style("font-size", 15)
-                .text("Year");
-            
-            line_g.append("text")
                 .attr("transform", `rotate(-90)`)
-                .attr("x", -150)
-                .attr("y", margin.top)
+                .attr("x", -200)
+                .attr("y", margin.top + 25)
                 .style("font-size", 15)
                 .text("Age");
         }
