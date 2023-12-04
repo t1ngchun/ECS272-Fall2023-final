@@ -17,10 +17,11 @@
             </section>
             <section class="step boarder">
                 <div class="title">The Columbine Shooting Event triggers a lots of school shooting events.</div>
-                We divide the states in the US into four regions(<span class="low"> Low </span>,<span class="medium"> Moderate </span>,<span class="high"> High </span> 
-                and<span class="very_high"> Very High </span>). According to the frequency of events occurence.
-                The map is the overview of the total count of the shooting events in each region from 1999 to 2023.
-                
+            </section>
+            <section class="step boarder">
+                <div class="title">We divide the states in the US into four regions acording to the frequency of events occurence.</div>
+                The map is the overview of the total count of the shooting events in each region from 1999 to 2023 with the four regions (<span class="low"> Low </span>,<span class="medium"> Moderate </span>,<span class="high"> High </span> 
+                and<span class="very_high"> Very High </span>).
             </section>
             <section class="step boarder">
                 <div class="title">Heat Map</div>
@@ -396,7 +397,7 @@ function getWeaponData (data) {
     ];
 }
 
-  
+let convertedData = null;
 let shootings = null;
 let occurenceLegend = null;
 let heatmaps = null;
@@ -406,20 +407,20 @@ let shootingPieData = null;
 let weaponPieData = null;
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
-    const convertedData = loadedData.map(item => {
+    convertedData = loadedData.map(item => {
     // Convert 'year' property to a number, keep other properties unchanged
         return {
             ...item,
+            long: +item.long,
+            lat: +item.lat,
             year: !isNaN(item.year) ? +item.year : item.year
         };
     });
-    // console.log(convertedData)
+    console.log(convertedData)
     shootings = getOcc(loadedData);
-    // console.log(shootings)
-    // console.log(occurenceLegend)
     heatmaps = getHeatMapData(convertedData)
     heatmaps_state = getHeatMapData_state(convertedData)
-    console.log(heatmaps_state)
+    display(convertedData)
     display(shootings)
     display(heatmaps)
     display(heatmaps_state)
@@ -449,6 +450,10 @@ d3.json('../../data/states-albers-10m.json')
     // Handle error if data loading fails
     console.error('Error loading data:', error);
   });
+let gun = null;
+d3.xml('../../data/gun-svgrepo-com.svg').then(svgData => {
+    gun = svgData
+});
 /*
  * scrollVis - encapsulates
  * all the code for the visualization
@@ -514,6 +519,8 @@ function scrollVis(){
             g = svg.select('g')
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
             
+
+                
             setupVis();
             setupSections();
         });
@@ -567,7 +574,7 @@ function scrollVis(){
 
         // draw the map
         if (us) {
-            // let us_states = topojson.feature(us, us.objects.states).features
+
             let path = d3.geoPath()
             map_g = g.append("g")            
             .selectAll("path")
@@ -577,7 +584,21 @@ function scrollVis(){
             .attr("d", path)
             .attr("stroke", "black")
             .attr("fill", "#E5E4E2")
-
+            let projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305]);
+            // Adding circles
+            g.append("g")            
+            .selectAll("circle")
+            .data(convertedData.filter(d=>d.long!=0 && d.lat!=0))
+            .enter()
+            .append("circle")        
+            .attr("cx", d => {
+                return projection([d.long,d.lat])[0];
+            })
+            .attr("cy", d => {
+                return projection([d.long,d.lat])[1];
+            })
+            .attr("r", 2)
+            .attr("fill", "red"); 
             // Adding text labels
             map_text_g = g.append("g")
             .selectAll("text")
@@ -597,7 +618,6 @@ function scrollVis(){
             .style("font-size", "10px") 
             .style("fill", "black");
 
-            // map_legend = g.append("g")
             let legendElementWidth = 30
             let legendHeight = 20      
             map_legend = g.append("g")
@@ -1036,10 +1056,11 @@ function scrollVis(){
         // time the active section changes
         activateFunctions[0] = showTitle;
         activateFunctions[1] = showMap;
-        activateFunctions[2] = showMapGradient;
-        activateFunctions[3] = showHeat;
-        activateFunctions[4] = showHeatState;
-        activateFunctions[5] = showPie;
+        activateFunctions[2] = showMapDots;
+        activateFunctions[3] = showMapGradient;
+        activateFunctions[4] = showHeat;
+        activateFunctions[5] = showHeatState;
+        activateFunctions[6] = showPie;
 
         // updateFunctions are called while
         // in a particular section to update
@@ -1129,7 +1150,15 @@ function scrollVis(){
         hideHeat();
         hideHeatState();
     }
-
+    function showMapDots(){
+        hideHeat();
+        hidePie();
+        if(map_g){
+            map_g
+            .transition()
+            .style("fill","#E5E4E2")
+        }
+    }
     /**
      * showMapGradient
      *
