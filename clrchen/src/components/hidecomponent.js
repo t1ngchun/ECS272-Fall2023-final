@@ -93,3 +93,12 @@ export function hideLine(line_g) {
         .attr('opacity', 0);
     }
 }
+
+export function hidePar(parellel_g){
+    if(parellel_g){
+        parellel_g
+        .transition()
+        .duration(0)
+        .attr('opacity', 0);
+    }
+}
