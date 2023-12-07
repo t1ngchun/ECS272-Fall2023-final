@@ -630,9 +630,6 @@ function scrollVis(){
             .style("font-size", "15px") 
             .style("font-weight", "bold")
             .style("fill", "white");
-
-
-
         }
 
         
@@ -646,6 +643,9 @@ function scrollVis(){
         }
         if (map_text_g) {
             map_text_g.attr('opacity', 0);
+        }
+        if (circle_g) {
+            circle_g.attr('opacity', 0);
         }
 
 
@@ -823,11 +823,6 @@ function scrollVis(){
                 .style("font-size", 14)
                 .style("fill", "#767678")
                 .text("Media coverage and publicized incidents might influence copycat behavior among younger individuals.")
-
-
-                
-
-
         }
 
         if (line_g) {
@@ -1143,11 +1138,7 @@ function scrollVis(){
         if(heat_state_g){
             heat_state_g.attr('opacity', 0);
             legend.attr('opacity', 0);
-
         }
-
-
-
     };
 
     /**
@@ -1172,7 +1163,7 @@ function scrollVis(){
         activateFunctions[10] = showPie;
         activateFunctions[11] = showHeat;
 
-        for (var i = 0; i < 10; i++) {
+        for (var i = 0; i < 12; i++) {
             updateFunctions[i] = function () {};
         }
     };
@@ -1316,10 +1307,6 @@ function scrollVis(){
             .style("r",d=>{return size(d.casualties)})
             .style("fill", d=>{
                 if(d.casualties > 8 ){
-                    // console.log("here")
-                    // console.log(d.school_name)
-                    // console.log(d.casualties)
-                    // console.log(d.state)
                     return "#cb181d"
                 }
             })
@@ -1352,6 +1339,7 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideLine(line_g);
+        hideDots(circle_g);
         if (heat_state_g) {
 
             heat_state_g
@@ -1368,8 +1356,8 @@ function scrollVis(){
             .attr('opacity', 1.0);
                    
 
-            const rowHeight = 25;
-            const RectsHeight = rowHeight * heatmaps_state.highStates.length + margin.top + margin.bottom;
+            // const rowHeight = 25;
+            // const RectsHeight = rowHeight * heatmaps_state.highStates.length + margin.top + margin.bottom;
 
             // Update y-axis scale domain
             // y.domain(heatmaps_state.highStates)
@@ -1400,7 +1388,38 @@ function scrollVis(){
                             return 'No events available';
                         }
                     })
+                if (d.events) {
+                    d.events.map((v) => {
+                        if (parseInt(v.injured) + parseInt(v.killed) > 8) {
+                            rect.style("stroke", "none") // Initially hide the stroke
+                            .style("stroke-width", 0) // Set stroke width to 0
+                            .style("shape-rendering", "crispEdges"); // Ensures sharp edges for rectangles
+
+                            // Add a transition to gradually show the stroke
+                            rect.transition()
+                                .delay(1000) // Delay the transition
+                                .duration(2000) // Transition duration
+                                .style("stroke", "yellow") // Outline color
+                                .style("stroke-width", 2); // Outline width
+                       }
+                    })
+                }
             });
+
+            //  heat_state_g.selectAll("#small_rects")
+            //     .each(function(d) {
+            //         const rect = d3.select(this);
+            //         if (d.events) {
+            //             d.events.map((v) => {
+            //                 if (parseInt(v.injured) + parseInt(v.killed) > 8) {
+            //                     console.log('xxxx', parseInt(v.injured) + parseInt(v.killed))
+            //                     rect.style("stroke", "yellow") // Outline color
+            //                         .style("stroke-width", 2) // Outline width
+            //                         .style("shape-rendering", "crispEdges"); // Ensures sharp edges for rectangles
+            //                     }
+            //             })
+            //         }
+            //     });
             
 
         } 
@@ -1415,6 +1434,7 @@ function scrollVis(){
         // hideMaptext();
         // hideHeat();
         hideHeatState(heat_state_g,legend,heat_rects);
+        hideDots(circle_g);
 
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
@@ -1449,6 +1469,7 @@ function scrollVis(){
         // hideMaptext();
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideHeatState(heat_state_g,legend,heat_rects);
+        hideDots(circle_g);
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
