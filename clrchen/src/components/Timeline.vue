@@ -71,7 +71,8 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
-import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie,hidePar} from "./hidecomponent"
+import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie, hidePar} from "./hidecomponent"
+
 import { filter, line, map, pie, sort } from "d3";
 import { h } from "vue";
 
@@ -251,8 +252,7 @@ function filteredPieChartData(data) {
             killed: +value.killed,
             injured: +value.injured,
             casualties: +value.casualties,
-            enrollment: +value.enrollment,
-            safe:(+value.enrollment)-(+value.casualties),
+            safe: (+value.enrollment)-(+value.casualties),
             age_shooter: parseInt(value.age_shooter1),
             shooting_type: filterShootingType(value.shooting_type),
             shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
@@ -393,7 +393,7 @@ let deceasedPieData = null;
 let shootingPieData = null;
 let weaponPieData = null;
 let lineChartData = null;
-let parellelChartData = null;
+let parallelChartData = null;
 let ageLine = null;
 let avgLine = null;
 
@@ -414,8 +414,8 @@ d3.csv('../../data/school-shootings.csv')
 
     display(shootings)
     display(heatmaps_state)
-    parellelChartData = filteredPieChartData(loadedData)
-    display(parellelChartData)
+    parallelChartData = filteredPieChartData(convertedData)
+    display(parallelChartData)
     lineChartData = getShooterAgeData(loadedData)
     display(lineChartData)
 
@@ -506,14 +506,14 @@ function scrollVis(){
     let xAxis_1999 = null;
     let xAxis_2003 = null;
     let line_g = null;
-    let parellel_g = null;
+    let parallel_g = null;
 
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
     const countmap = new Map(shootings?.map(d => [d.name, d.value]));
     const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
     const color_state = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps_state.values1DArray)])
-    const color_age = d3.scaleSequential(d3.interpolateYlOrBr).domain([10,32])
+    const color_age = d3.scaleSequential(d3.interpolateYlOrBr).domain([10, 32])
     //line chart
     function transition(path) {
         var totalLength = path.node().getTotalLength();
@@ -638,7 +638,7 @@ function scrollVis(){
 
 
         // line chart
-        /*
+  
         if (lineChartData) {
             console.log(lineChartData)
             const x = d3.scaleLinear()
@@ -793,21 +793,21 @@ function scrollVis(){
         if (line_g) {
             line_g.attr('opacity', 0)
         }
-        */
-        if(parellelChartData){
-            parellel_g = g.append("g")
+
+        if(parallelChartData){
+            parallel_g = g.append("g")
             let key:string[] = ['age_shooter','injured','killed','safe']
             let yAge = d3.scaleLinear()
-                            .domain(d3.extent(parellelChartData.map(d => d.age_shooter)) )
+                            .domain(d3.extent(parallelChartData.map(d => d.age_shooter)) )
                             .range([height- height/3, height/4])
             let yInjured = d3.scaleLinear()
-                            .domain(d3.extent(parellelChartData.map(d => d.injured)) )
+                            .domain(d3.extent(parallelChartData.map(d => d.injured)) )
                             .range([height- height/3, height/4])
             let yKilled = d3.scaleLinear()
-                            .domain(d3.extent(parellelChartData.map(d => d.killed)) )
+                            .domain(d3.extent(parallelChartData.map(d => d.killed)) )
                             .range([height- height/3, height/4])
             let ySafe = d3.scaleLinear()
-                            .domain(d3.extent(parellelChartData.map(d => d.safe)) )
+                            .domain(d3.extent(parallelChartData.map(d => d.safe)) )
                             .range([height- height/3, height/4])
             
             let xScale = d3.scalePoint()
@@ -824,9 +824,9 @@ function scrollVis(){
             function path(d) {
                 return d3.line()(key.map(function(p) { return [xScale(p), y[p](d[p])+50]; }));
             }
-            parellel_g.append('g')
+            parallel_g.append('g')
                 .selectAll("myPath")
-                .data(parellelChartData)
+                .data(parallelChartData)
                 .enter().append("path")
                 .attr("d",  path)
                 .style("fill", "none")
@@ -835,7 +835,7 @@ function scrollVis(){
                 function(d){return color_age(d.age_shooter)})
                 .style("opacity", 0.7)
                 .style('stroke-width', '1px')
-            parellel_g.append("g").attr("transform", "translate(" + xScale(key[0]) + ",50)")
+            parallel_g.append("g").attr("transform", "translate(" + xScale(key[0]) + ",50)")
             .call(d3.axisLeft(yAge))
             .append("text")
             .style("text-anchor", "middle")
@@ -844,7 +844,7 @@ function scrollVis(){
             .style("fill", "black")
             .style('font-size', '.9rem')
 
-            parellel_g.append("g").attr("transform", "translate(" + xScale(key[1]) + ",50)")
+            parallel_g.append("g").attr("transform", "translate(" + xScale(key[1]) + ",50)")
             .call(d3.axisLeft(yInjured))
             .append("text")
             .style("text-anchor", "middle")
@@ -853,7 +853,7 @@ function scrollVis(){
             .style("fill", "black")
             .style('font-size', '.9rem')
 
-            parellel_g.append("g").attr("transform", "translate(" + xScale(key[2]) + ",50)")
+            parallel_g.append("g").attr("transform", "translate(" + xScale(key[2]) + ",50)")
             .call(d3.axisLeft(yKilled))
             .append("text")
             .style("text-anchor", "middle")
@@ -862,7 +862,7 @@ function scrollVis(){
             .style("fill", "black")
             .style('font-size', '.9rem')
 
-            parellel_g.append("g")
+            parallel_g.append("g")
             .attr("transform", "translate(" + xScale(key[3]) + ",50)")
             .call(d3.axisRight(ySafe))
             .append("text")
@@ -872,9 +872,10 @@ function scrollVis(){
             .style("fill", "black")
             .style('font-size', '.9rem')
         }
-        if(parellel_g){
-            parellel_g.attr('opacity', 0)
+        if(parallel_g){
+            parallel_g.attr('opacity', 0)
         }
+
         // pie chart
         var deceasedColor = d3.scaleOrdinal(['#d8e2dc', 'white', '#ffcad4','#d8e2dc' ]);
         var shootingColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', 'white']);
@@ -1202,9 +1203,9 @@ function scrollVis(){
         activateFunctions[2] = showMapDots;
         activateFunctions[3] = showMapGradient;
         activateFunctions[4] = showHeat;
-        activateFunctions[5] = showMapBigDot;
-        activateFunctions[6] = showHeat; // empty page
-        activateFunctions[7] = showHeatState;
+        activateFunctions[5] = showHeatState;
+        activateFunctions[6] = showMapBigDot; // empty page
+        activateFunctions[7] = showPar;
         activateFunctions[8] = showHeat;
         activateFunctions[9] = showLine;
         activateFunctions[10] = showPie;
@@ -1230,7 +1231,7 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
-        hidePar(parellel_g);
+        hidePar(parallel_g);
     }
     /**
      * showMap - draw the map
@@ -1270,10 +1271,11 @@ function scrollVis(){
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g )
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
-        hidePar(parellel_g);
+        hidePar(parallel_g);
     }
     function showMapDots(){
         hideMapcount(map_count_g);
+        hidePar(parallel_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hidePar(parellel_g);
         var size = d3.scaleLinear()
@@ -1308,7 +1310,7 @@ function scrollVis(){
         hideDots(circle_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideLine(line_g);
-        hidePar(parellel_g);
+        hidePar(parallel_g);
         if (map_g) {
             map_g
             .transition()
@@ -1337,7 +1339,8 @@ function scrollVis(){
     function showMapBigDot(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
-        hidePar(parellel_g);
+        hidePar(parallel_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
         var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
@@ -1384,8 +1387,18 @@ function scrollVis(){
         hideHeatState(heat_state_g,legend,heat_rects);
         hideLine(line_g);
         hideDots(circle_g);
-        if(parellel_g){
-            parellel_g
+        hidePar(parallel_g);
+    }
+    function showPar(){
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideLine(line_g);
+        hideDots(circle_g);
+        if(parallel_g){
+            parallel_g
             .transition()
             .duration(0)
             .attr('opacity', 1.0);
@@ -1398,7 +1411,7 @@ function scrollVis(){
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideLine(line_g);
         hideDots(circle_g);
-        hidePar(parellel_g);
+        hidePar(parallel_g);
         if (heat_state_g) {
 
             heat_state_g
@@ -1494,7 +1507,8 @@ function scrollVis(){
         // hideHeat();
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
-        hidePar(parellel_g);
+        hidePar(parallel_g);
+
 
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
@@ -1530,7 +1544,8 @@ function scrollVis(){
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
-        hidePar(parellel_g);
+        hidePar(parallel_g);
+
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
