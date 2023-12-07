@@ -1,3 +1,4 @@
+import * as d3 from "d3"
 export function hideMap(map_g,map_count_g) {
     if (map_g) {
         map_g
@@ -39,6 +40,7 @@ export function hideHeatState(heat_state_g,legend,heat_rects) {
         .attr('opacity', 0);
                  
     }
+    
 
 }
 
@@ -82,7 +84,9 @@ export function hideMapcount(map_count_g) {
 }
 
 export function hideLine(line_g) {
+    
     if(line_g){
+       
         line_g
         .transition()
         .duration(0)

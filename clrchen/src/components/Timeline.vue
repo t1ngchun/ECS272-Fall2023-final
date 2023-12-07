@@ -7,44 +7,51 @@
                 <div class="title">What happened the Columbine High School Event?</div>
                 <span id="intro">
                     The Columbine High School massacre was a school shooting incident 
-                    that occurred on April 20, 1999, at Columbine High School in Jefferson 
-                    County, Colorado, USA. Two teenage students armed with firearms and explosives, 
+                    that occurred on April 20, 1999, at Columbine High School in Colorado, USA. Two teenage students armed with firearms and explosives, 
                     entered the campus, resulting in the shooting deaths of 12 students and 1 teacher, 
-                    with 24 others injured. Subsequently, both of them took their own lives. 
+                    with 21 others injured. Subsequently, both of them took their own lives. 
                     This event is regarded as the deadliest school shooting incident in American history. 
                     The term "Columbine" became synonymous  with school shootings.
                 </span>
             </section>
             <section class="step boarder">
-                <div class="title">The Columbine Shooting Event triggers a lots of school shooting events.</div>
+                <div class="title">The Columbine Shooting Event triggers a lots of school shooting events in the U.S. since 1999 until now.</div>
             </section>
             <section class="step boarder">
-                <div class="title">We focus on the states which has high frequency of events occurence (event number > 11).</div>
-                From 1999 to 2023 we found out that California (40), Texas (25), Florida (24), and North Carolina (21) have the most number of school shooting events.
+                <div class="title">We focus on the states which has high frequency of events occurence.</div>
+                During this period of time, we found out that California (40), Texas (25), Florida (24), and North Carolina (21) have the most number of school shooting events.
             </section>
             <section class="step boarder">
-                <div class="title">Screenshot</div>
-                Screenshot
+                <div class="title">Why do these states have high occurence?</div>
+                1. Gun Culture and Legislation<br>
+                2. Popularity Density<br>
+                3. Geographical Location<br>
             </section>
             <section class="step boarder">
-                <div class="title">Heat Map</div>
-                Heat Map description
+                <div class="title">Next, our question is how about the most tragedy event? When did they happened?</div>
             </section>
             <section class="step boarder">
-                <div class="title">Heat Map Takeaway</div>
-                Heat Map Takeaway
+                <div class="title">We break down into individual years, aimming to identify the most frequently occurring year and the most tragic events happened year.</div>
+                
             </section>
             <section class="step boarder">
-                <div class="title">Line Chart</div>
-                The y-axis represents the trend of the age of young shooters, and the x-axis represents years from 1999 to 2023.
+                <div class="title">Besides the Columbine event, these are the serious events happened in the U.S. since 1999. All of them cause the casualties more than ten people.</div>
+            </section>
+            <section class="step boarder">
+                <div class="title">How old are the shooter?</div>
+                This figure shows the trend of the age of young shooters from 1999 to 2023.
                 <div class="title">We found that the age of young shooters is decreasing.</div>
-                2023 even has the lowest age that the young shooter is only 7 year-old.
+                THe youngest shooter appears is year 2023 with only 7 year-old.
             </section>
             <section class="step boarder">
                 <div class="title">Background Information of the Young Shooters</div>
-                1. Where did they get the weapon?<br>
-                2. Did they commit suicide after shooting?<br>
-                3. Did they shoot others on purpose?
+                1. Access to Firearms<br>
+                - Where did they get the weapon?                
+                2. Mental Health <br>
+                - Did they commit suicide after?<br>
+                3. Social Challenges<br>
+                - Did they do it on purpose?<br>
+
             </section>
             <section class="step boarder">
                 <div class="title">Takeaway</div>
@@ -78,7 +85,7 @@ function convertRegion(input)  {
         }
     }
 }
-// for geo map
+// for geo map:count occurence of state events
 function filterDataByState(data) {
   let states = groupBy(data, "state");
   let formattedData = [];
@@ -100,7 +107,7 @@ function getOcc(data) {
     const min = d3.min(sortedValues)
     const Q1 = d3.quantile(sortedValues, 0.25);
     const median = d3.median(sortedValues);
-    const Q3 = d3.quantile(sortedValues, 0.75);
+    const Q3 = 15//d3.quantile(sortedValues, 0.75);
     const max = d3.max(sortedValues);
     // Define ranges based on these percentiles
     const rangeLow = [min, Q1];
@@ -114,7 +121,6 @@ function getOcc(data) {
         { range: rangeHigh, category: "High" },
         { range: rangeVeryHigh, category: "Very High" },
     ];
-    occurenceLegend = occurenceCategories;
     let formattedData = [];
     Object.keys(dataByState).forEach(d => {
         let data = dataByState[d]
@@ -131,9 +137,34 @@ function getOcc(data) {
 
     return formattedData;
 }
+// function getHeatMapData_casaulties(data){
+//     const casualtiesByState = {};
+//     data.forEach((incident) => {
+//         const state = incident.state;
+//         const casualties = incident.casualties;
+
+//         if (!casualtiesByState[state]) {
+//             casualtiesByState[state] = 0;
+//         }
+
+//         casualtiesByState[state] += casualties;
+//     });
+//     console.log(casualtiesByState);
+// }
 function getHeatMapData_state(data) {
+    const infoData = data.map(item => {
+        return {
+            school_name: item.school_name,
+            killed: item.killed,
+            injured: item.injured,
+            state: item.state,
+            year: !isNaN(item.year) ? +item.year : item.year
+        };
+    });
+    // console.log("infoData before mappingL ",infoData);
     const years = [...new Set(data.map(item => item.year))]
     const states = [...new Set(data.map(item => item.state))]
+    //map occurence value to state
     const nameToOccCatMap = getOcc(data).reduce((acc, item) => {
         acc[item.name] = item.occ_cat;
         return acc;
@@ -184,17 +215,44 @@ function getHeatMapData_state(data) {
     const values1DArray = Object.values(countByYearCategory).flatMap(yearCounts =>
         Object.values(yearCounts)
     );
-    
+    // console.log("twoD before adding: ", twoDArray);
+    twoDArray.forEach((stateArray, stateIndex) => {
+    // Loop through each year's data for the state
+        stateArray.forEach((yearData, yearIndex) => {
+            // Find all corresponding infoData for this state and year
+            const correspondingInfo = infoData.filter(item => {
+                return (
+                    item.state === yearData.state &&
+                    item.year === (1999 + yearIndex) // Assuming the year starts from 1999
+                );
+            });
+
+            // If correspondingInfo is found, add events array to twoDArray element
+            if (correspondingInfo.length > 0) {
+                twoDArray[stateIndex][yearIndex].events = correspondingInfo.map(item => ({
+                    school_name: item.school_name,
+                    injured: item.injured,
+                    killed: item.killed,
+                    state: item.state,
+                    year: item.year,
+                }));
+            }
+        });
+    });
+
+
+    // console.log("after",highStates);
     return {
         twoDArray,
         values1DArray,
-        sortedStatesByOccurrence,
-        updatedStates,
-        highStates,
-        years,
+        sortedStatesByOccurrence, //map each state with occurence value and category
+        updatedStates, //for ordering all states based on occurence
+        highStates,  //for heatmap transition
+        years, //years array
         year: 1999
     };
 }
+
 // for pie chart
 function filteredPieChartData(data) {
     let formattedData = [];
@@ -205,7 +263,7 @@ function filteredPieChartData(data) {
             state: value.state,
             killed: value.killed,
             injured: value.injured,
-            casualties: value.casualties,
+            casualties: +value.casualties,
             age_shooter: parseInt(value.age_shooter1),
             shooting_type: filterShootingType(value.shooting_type),
             shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
@@ -215,11 +273,13 @@ function filteredPieChartData(data) {
             formattedData.push(processedObj);
         }
     });
+    formattedData = formattedData.filter(d => d.casualties > 8 )
     return formattedData;
 }
 // for line chart
 function getShooterAgeData(data) {
     let filteredData = filteredPieChartData(data)
+    console.log(filteredData)
     let acc = 0;
     let len = filteredData.length;
     filteredData.map((data) => {
@@ -260,10 +320,10 @@ function getDeceasedData(data) {
     });
 
     return [
-        { name: 'alive', value: alive / 387},
-        { name: 'killed by police', value: police / 387},
-        { name: 'suicide', value: suicide / 387},
-        { name: 'others or N/A', value: others / 387},
+        { name: 'alive', value: alive / 13},
+        { name: 'others or N/A', value: others / 13},
+        { name: 'suicide', value: suicide / 13},
+        { name: 'killed by police', value: police / 13},
     ];
 }
 function getShootingData(data) {
@@ -289,10 +349,10 @@ function getShootingData(data) {
     });
 
     return [
-        { name: 'targeted', value: targeted / 387},
-        { name: 'indiscriminate', value: indiscriminate / 387},
-        { name: 'accidental', value: accidental / 387},
-        { name: 'others or N/A', value: others / 387},
+        { name: 'targeted', value: targeted / 13},
+        { name: 'indiscriminate', value: indiscriminate / 13},
+        { name: 'accidental', value: accidental / 13},
+        { name: 'others or N/A', value: others / 13},
     ];
 }
 function getWeaponData (data) {
@@ -327,19 +387,19 @@ function getWeaponData (data) {
     });
 
     return [
-        { name: 'family', value: family / 387},
-        { name: 'issued', value: issued / 387},
-        { name: 'friend', value: friend / 387},
-        { name: 'stolen', value: stolen / 387},
-        { name: 'purchased', value: purchased / 387},
-        { name: 'others or N/A', value: others / 387},
+        { name: 'family', value: family / 13},
+        { name: 'issued', value: issued / 13},
+        { name: 'friend', value: friend / 13},
+        { name: 'stolen', value: stolen / 13},
+        { name: 'purchased', value: purchased / 13},
+        { name: 'others or N/A', value: others / 13},
     ];
 }
 
 let convertedData = null;
 let shootings = null;
-let occurenceLegend = null;
 let heatmaps_state = null;
+// let heatmaps_casaulties = null;
 let deceasedPieData = null;
 let shootingPieData = null;
 let weaponPieData = null;
@@ -352,30 +412,36 @@ d3.csv('../../data/school-shootings.csv')
     convertedData = loadedData.map(item => {
         return {
             ...item,
+            casualties: +item.casualties,
             long: +item.long,
             lat: +item.lat,
             year: !isNaN(item.year) ? +item.year : item.year
         };
     });
     shootings = getOcc(loadedData);
-
+    // console.log(loadedData)
     heatmaps_state = getHeatMapData_state(convertedData)
+    // heatmaps_casaulties = getHeatMapData_casaulties(convertedData)
+    // event_info = getHeatMap_info(convertedData)
+    // console.log(heatmaps_state)
     display(convertedData)
 
     display(shootings)
     display(heatmaps_state)
+    // console.log(shootings)
 
     lineChartData = getShooterAgeData(loadedData)
     display(lineChartData)
 
     deceasedPieData = getDeceasedData(loadedData)
     display(deceasedPieData)
-    
+    deceasedPieData = deceasedPieData.filter(d => d.value > 0)
     shootingPieData = getShootingData(loadedData)
     display(shootingPieData)
-
+    shootingPieData = shootingPieData.filter(d => d.value > 0)
     weaponPieData = getWeaponData(loadedData)
     display(weaponPieData)
+    weaponPieData = weaponPieData.filter(d => d.value > 0)
   })
   .catch(function(error) {
     console.error('Error loading data:', error);
@@ -477,15 +543,23 @@ function scrollVis(){
         .attr('x', width / 2)
         .attr('y', height / 3)
         .text('School Shootings')
-        .attr('font-size', '50px')
+        .attr('font-size', '60px')
+        .attr("font-weight", "bold")
         .attr('text-anchor', 'middle');
 
         g.append('text')
         .attr('class', 'sub-title event-title')
         .attr('x', width / 2)
-        .attr('y', (height / 3) + (height / 5))
-        .text('Influenced by Columbine Shooting Event in the US');
-        g.selectAll('.openvis-title')
+        .attr('y', (height / 3) + (height / 7))
+        .text('Influenced by Columbine Shooting Event in the US')
+        .attr('text-anchor', 'middle')
+        .attr("font-size", "30px")
+        .attr("font-family", "TiemposTextWeb-Regular","Georgia")
+        .attr("fill", "#767678");
+
+
+
+        g.selectAll('.event-title')
         .attr('opacity', 0);
 
         // draw the map
@@ -501,11 +575,15 @@ function scrollVis(){
             .attr("fill", "#E5E4E2")
             let projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305]);
             // Adding circles
+            // console.log(convertedData)
+            var size = d3.scaleLinear()
+                 .domain([0,34])
+                 .range([3,10]);
             circle_g = g.append("g")            
             .selectAll("circle")
             .data(convertedData.filter(d=>d.long!=0 && d.lat!=0))
             .enter()
-            .append("circle")        
+            .append("circle").attr("id","circle")        
             .attr("cx", d => {
                 return projection([d.long,d.lat])[0];
             })
@@ -513,7 +591,7 @@ function scrollVis(){
                 return projection([d.long,d.lat])[1];
             })
             .attr("r", 3)
-            .attr("fill", "#fb6a4a"); 
+            .attr("fill", "#fc9272"); //fc9272fb6a4aef3b2c
             // Adding text labels
             map_text_g = g.append("g")
             .selectAll("text")
@@ -552,152 +630,12 @@ function scrollVis(){
             .style("font-size", "15px") 
             .style("font-weight", "bold")
             .style("fill", "white");
+
+
+
         }
 
-        if(heatmaps_state){
-            heat_state_g = g.append("g")
-            const rowHeight = 12;
-            const RectsHeight = rowHeight * heatmaps_state.updatedStates.length + margin.top + margin.bottom;
-            x = d3.scaleLinear()
-                .domain([d3.min(heatmaps_state.years), d3.max(heatmaps_state.years) + 1])
-                .range([margin.left+width/6, (width-margin.right-30)/1.1])
-            y = d3.scaleBand()
-                .domain(heatmaps_state.updatedStates)
-                .rangeRound([height/12+20, height/12+20+RectsHeight - margin.bottom])
- 
-
-            x_axis = heat_state_g.append("g")
-                .call(g => g.append("g")
-                    .attr("transform", `translate(0,${height/12+20})`)
-                    .call(d3.axisTop(x).tickValues(heatmaps_state.years).ticks(null, "d"))
-                    .call(g => g.select(".domain").remove()))
-            y_axis = heat_state_g.append("g")
-                .attr("transform", `translate(${margin.left+width/6},0)`)
-                .call(d3.axisLeft(y).tickSize(0))
-
-            heat_rects = heat_state_g.append("g")
-                .selectAll("g")
-                .data(heatmaps_state.twoDArray)
-                .enter()
-                .append("g")
-                .attr("id", "long_rects")
-                .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])})`)
-                .selectAll("rect")
-                .data(d => d)
-                .enter()
-                .append("rect")
-                .attr("id", "small_rects")
-                    .attr("x", (d, i) => x(heatmaps_state.years[i]) + 1)
-                    .attr("width", (d, i) => x(heatmaps_state.years[i] + 1) - x(heatmaps_state.years[i]) - 1)
-                    .attr("height", y.bandwidth()-1)
-                    .attr("fill", d => {return color_state(d.value)})
         
-            // legend
-            const legendWidth = 200;
-            const legendHeight = 15;
-            const numColorSteps = 100; 
-
-            legend = heat_state_g.append("g")
-                .attr("class", "legend")
-                .attr("transform", `translate(${margin.left + 5},${height/1.5}) rotate(-90)`);
-
-
-            const defs = legend.append("defs");
-            const linearGradient = defs.append("linearGradient")
-                .attr("id", "legendGradient")
-                .attr("x1", "0%")
-                .attr("y1", "0%")
-                .attr("x2", "100%")
-                .attr("y2", "0%");
-
-            const domainValues = color_state.domain();
-            const step = (domainValues[1] - domainValues[0]) / numColorSteps;
-            for (let i = 0; i <= numColorSteps; i++) {
-                linearGradient.append("stop")
-                    .attr("offset", `${(i * 100) / numColorSteps}%`)
-                    .attr("stop-color", color_state(domainValues[0] + step * i));
-            }
-
-            legend.append("rect")
-                .attr("x",  -legendWidth)
-                .attr("y",-15)
-                .attr("width", legendWidth)
-                .attr("height", legendHeight)
-                .attr("transform", `rotate(-180) `)
-                .style("fill", "url(#legendGradient)");
-
-            const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
-
-            const positionsInLegend = colorRange.map(value => {
-                const mappedPosition = ((value - color_state.domain()[0]) / (color_state.domain()[1] - color_state.domain()[0])) * legendWidth;
-                return mappedPosition;
-            });
-
-
-            const lengendValPos = colorRange.map((value, index) => {
-                return {
-                    value: parseInt(value.toFixed(1)),
-                    position: positionsInLegend[index]
-                };
-            });
-
-            legend.selectAll("line.quantile")
-                .data(lengendValPos)
-                .enter().append("line")
-                .attr("class", "quantile")
-                .attr("x1", d => (d.position))
-                .attr("y1", -3)
-                .attr("x2", d => (d.position))
-                .attr("y2", legendHeight+3)
-                .style("stroke", "#A4A4A4")
-                .style("stroke-width", 1);
-
-            legend.selectAll("text")
-                .data(lengendValPos)
-                .enter().append("text")
-                .attr("y", d => (d.position-5))
-                .attr("x", legendHeight + 20)
-                .text(d => (d.value))
-                .attr("transform",`translate(${legendWidth-10},0) rotate(90)`)
-                .style("fill", "#A4A4A4")
-                .style('font-weight', 'bold');
-
-
-
-            // xAxis_1999 = x_axis
-            // .append("g")
-            // // .style("opacity",0)
-            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
-            // .call(d3.axisBottom(x)
-            //         .tickValues([heatmaps.year])
-            //         .tickFormat(x => x)
-            //         .tickSize(-RectsHeight-margin.bottom))
-            //         .style("color","red")
-            //     .call(g => g.select(".tick text")
-            //         .attr("dy","1.5em")
-            //         .clone()
-            //         .attr("dy", "3em")
-            //         .style("font-weight", "bold")
-            //         .text("Columbine Event"))
-            //     .call(g => g.select(".domain").remove())
-            // xAxis_2003 = x_axis
-            // .append("g")
-            // // .style("opacity",0)
-            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
-            // .call(d3.axisBottom(x)
-            //         .tickValues([2003])
-            //         .tickFormat(x => x)
-            //         .tickSize(-RectsHeight-margin.bottom))
-            //         .style("color","red")
-            //     .call(g => g.select(".tick text")
-            //         .attr("dy","1.5em")
-            //         .clone()
-            //         .attr("dy", "3em")
-            //         .style("font-weight", "bold")
-            //         .text("Columbine Event"))
-            //     .call(g => g.select(".domain").remove())
-        }
-
         if (map_g) {
             map_g.attr('opacity', 0);
             map_text_g.attr('opacity', 0);
@@ -710,15 +648,12 @@ function scrollVis(){
             map_text_g.attr('opacity', 0);
         }
 
-        if(heat_state_g){
-            heat_state_g.attr('opacity', 0);
-            legend.attr('opacity', 0);
 
-        }
 
         // line chart
         
         if (lineChartData) {
+            console.log(lineChartData)
             const x = d3.scaleLinear()
                 .domain(d3.extent(lineChartData, d => d.year))
                 .range([margin.left+50, width - margin.right - 50]);
@@ -856,21 +791,21 @@ function scrollVis(){
                 .attr("transform",  `translate(${margin.left + 100}, ${height - 180})`)
                 .append("text")
                 .style("font-size", 14)
-                .style("fill", "grey")
+                .style("fill", "#767678")
                 .text("There could be various factors contributing to a decrease in the age of young shooters involved in school")
             // Words
             line_g.append("g")
                 .attr("transform",  `translate(${margin.left + 100}, ${height - 160})`)
                 .append("text")
                 .style("font-size", 14)
-                .style("fill", "grey")
+                .style("fill", "#767678")
                 .text("shooting events over time. The factors may involve Access to Firearms, Mental Health, Copycat Behavior.")
             // Words
             line_g.append("g")
                 .attr("transform",  `translate(${margin.left + 100}, ${height - 140})`)
                 .append("text")
                 .style("font-size", 14)
-                .style("fill", "grey")
+                .style("fill", "#767678")
                 .text("Accessibility to firearms among younger individuals might have increased.")
             
             // Words
@@ -878,7 +813,7 @@ function scrollVis(){
                 .attr("transform",  `translate(${margin.left + 100}, ${height - 120})`)
                 .append("text")
                 .style("font-size", 14)
-                .style("fill", "grey")
+                .style("fill", "#767678")
                 .text("There might be a rise in mental health issues or social challenges affecting younger generations.")
 
             // Words
@@ -886,7 +821,7 @@ function scrollVis(){
                 .attr("transform",  `translate(${margin.left + 100}, ${height - 100})`)
                 .append("text")
                 .style("font-size", 14)
-                .style("fill", "grey")
+                .style("fill", "#767678")
                 .text("Media coverage and publicized incidents might influence copycat behavior among younger individuals.")
 
 
@@ -899,9 +834,9 @@ function scrollVis(){
             line_g.attr('opacity', 0)
         }
         // pie chart
-        var deceasedColor = d3.scaleOrdinal(['#d8e2dc', '#d8e2dc', '#ffcad4', '#cbcbcb']);
-        var shootingColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#cbcbcb']);
-        var weaponColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#cbcbcb']);
+        var deceasedColor = d3.scaleOrdinal(['#d8e2dc', 'white', '#ffcad4','#d8e2dc' ]);
+        var shootingColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', 'white']);
+        var weaponColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#d8e2dc', 'white']);
 
         if (deceasedPieData) {
             var pie = d3.pie()
@@ -914,9 +849,9 @@ function scrollVis(){
                 .innerRadius(60)
                 .outerRadius(120)
             
-            deceased_pie_g = svg.append("g")
-                .attr("class", "pie")
-                .attr("transform", `translate(300, 200)`);
+            deceased_pie_g = g.append("g")
+                // .attr("class", "pie")
+                .attr("transform", `translate(${width*0.77}, ${height*0.32})`);
             
             var arcs = deceased_pie_g.selectAll("arc")
                 .data(pie)
@@ -935,8 +870,8 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => deceasedPieData[i].name)
-                .style("font-size", 10)
-                .attr("fill", "black");
+                .style("fill", "#767678")
+                .style('font-weight', 'bold');
 
             arcs.append("text")
                 .attr("transform", d => {
@@ -945,8 +880,8 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text(function(d, i) {
-                    if(Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) > 1){
-                        return `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`
+                    if(Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) > 0){
+                        return `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 99.5)}%`
                     }
                 })
                 .style("font-size", 10)
@@ -963,8 +898,8 @@ function scrollVis(){
                 .innerRadius(60)
                 .outerRadius(120)
             
-            shooting_pie_g = svg.append("g")
-                .attr("transform", `translate(750, 200)`);
+            shooting_pie_g = g.append("g")
+                .attr("transform", `translate(${width*0.54}, ${height*0.74})`);
             
             var arcs = shooting_pie_g.selectAll("arc")
                 .data(pie)
@@ -979,12 +914,12 @@ function scrollVis(){
             arcs.append("text")
                 .attr("transform", d => {
                 var c = arc.centroid(d);
-                return "translate("  + c[0] * 1.8 + "," + (c[1] * 1.5-10) + ")";
+                return "translate("  + c[0] * 1.8 + "," + (c[1] * 1.5+10) + ")";
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => shootingPieData[i].name)
-                .style("font-size", 10)
-                .attr("fill", "black");
+                .style("fill", "#767678")
+                .style('font-weight', 'bold');
 
             arcs.append("text")
                 .attr("transform", d => {
@@ -992,7 +927,11 @@ function scrollVis(){
                 return "translate("  + c[0] + "," + c[1] + ")";
                 })
                 .attr("text-anchor", "middle")
-                .text((d, i) => `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`)
+                .text(function(d, i) {
+                    if(Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) > 0){
+                        return `${Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`
+                    }
+                })
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
@@ -1007,8 +946,8 @@ function scrollVis(){
                 .innerRadius(60)
                 .outerRadius(120)
             
-            weapon_pie_g = svg.append("g")
-                .attr("transform", `translate(525, 450)`);
+            weapon_pie_g = g.append("g")
+                .attr("transform", `translate(${width*0.25}, ${height*0.32})`);
             
             var arcs = weapon_pie_g.selectAll("arc")
                 .data(pie)
@@ -1027,9 +966,9 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text((d, i) => weaponPieData[i].name)
-                .style("font-size", 10)
-                .attr("fill", "black");
-
+                .style("fill", "#767678")
+                .style('font-weight', 'bold');
+            
             arcs.append("text")
                 .attr("transform", d => {
                 var c = arc.centroid(d);
@@ -1037,13 +976,14 @@ function scrollVis(){
                 })
                 .attr("text-anchor", "middle")
                 .text(function(d, i) {
-                    if(-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) > 1){
+                    if(-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100) > 0){
                         return `${-Math.round((d.endAngle - d.startAngle) / (2 * Math.PI) * 100)}%`
                     }
                 })
                 .style("font-size", 10)
                 .attr("fill", "black");
         }
+
 
         if (deceased_pie_g) {
             deceased_pie_g.attr('opacity', 0);
@@ -1054,6 +994,159 @@ function scrollVis(){
         if (weapon_pie_g) {
             weapon_pie_g.attr('opacity', 0);
         }
+
+        if(heatmaps_state){
+            heat_state_g = g.append("g").attr("id","heat_state_g")
+            const rowHeight = 12;
+            const RectsHeight = rowHeight * heatmaps_state.updatedStates.length + margin.top + margin.bottom;
+            x = d3.scaleLinear()
+                .domain([d3.min(heatmaps_state.years), d3.max(heatmaps_state.years) + 1])
+                .range([margin.left+width/6, (width-margin.right-30)/1.1])
+            y = d3.scaleBand()
+                .domain(heatmaps_state.updatedStates)
+                .rangeRound([height/25+10, height/25+10+RectsHeight - margin.bottom])
+ 
+
+            x_axis = heat_state_g.append("g")
+                .call(g => g.append("g")
+                    .attr("transform", `translate(0,${height/20+10})`)
+                    .call(d3.axisTop(x).tickValues(heatmaps_state.years).ticks(null, "d"))
+                    .call(g => g.select(".domain").remove()))
+            y_axis = heat_state_g.append("g")
+                .attr("transform", `translate(${margin.left+width/6},0)`)
+                .call(d3.axisLeft(y).tickSize(0))
+
+            heat_rects = heat_state_g.append("g")
+                .selectAll("g")
+                .data(heatmaps_state.twoDArray)
+                .enter()
+                .append("g")
+                .attr("id", "long_rects")
+                .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])})`)
+                .selectAll("rect")
+                .data(d => d)
+                .enter()
+                .append("rect")
+                .attr("id", "small_rects")
+                    .attr("x", (d, i) => x(heatmaps_state.years[i]) + 1)
+                    .attr("width", (d, i) => x(heatmaps_state.years[i] + 1) - x(heatmaps_state.years[i]) - 1)
+                    .attr("height", y.bandwidth()-1)
+                    .attr("fill", d => {return color_state(d.value)})
+
+        
+            // legend
+            const legendWidth = 200;
+            const legendHeight = 15;
+            const numColorSteps = 100; 
+
+            legend = heat_state_g.append("g")
+                .attr("class", "legend")
+                .attr("transform", `translate(${margin.left + 5},${height/1.5}) rotate(-90)`);
+
+
+            const defs = legend.append("defs");
+            const linearGradient = defs.append("linearGradient")
+                .attr("id", "legendGradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "100%")
+                .attr("y2", "0%");
+
+            const domainValues = color_state.domain();
+            const step = (domainValues[1] - domainValues[0]) / numColorSteps;
+            for (let i = 0; i <= numColorSteps; i++) {
+                linearGradient.append("stop")
+                    .attr("offset", `${(i * 100) / numColorSteps}%`)
+                    .attr("stop-color", color_state(domainValues[0] + step * i));
+            }
+
+            legend.append("rect")
+                .attr("x",  -legendWidth)
+                .attr("y",-15)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .attr("transform", `rotate(-180) `)
+                .style("fill", "url(#legendGradient)");
+
+            const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
+
+            const positionsInLegend = colorRange.map(value => {
+                const mappedPosition = ((value - color_state.domain()[0]) / (color_state.domain()[1] - color_state.domain()[0])) * legendWidth;
+                return mappedPosition;
+            });
+
+
+            const lengendValPos = colorRange.map((value, index) => {
+                return {
+                    value: parseInt(value.toFixed(1)),
+                    position: positionsInLegend[index]
+                };
+            });
+
+            legend.selectAll("line.quantile")
+                .data(lengendValPos)
+                .enter().append("line")
+                .attr("class", "quantile")
+                .attr("x1", d => (d.position))
+                .attr("y1", -3)
+                .attr("x2", d => (d.position))
+                .attr("y2", legendHeight+3)
+                .style("stroke", "#A4A4A4")
+                .style("stroke-width", 1);
+
+            legend.selectAll("text")
+                .data(lengendValPos)
+                .enter().append("text")
+                .attr("y", d => (d.position-5))
+                .attr("x", legendHeight + 20)
+                .text(d => (d.value))
+                .attr("transform",`translate(${legendWidth-10},0) rotate(90)`)
+                .style("fill", "#767678")
+                .style('font-weight', 'bold');
+
+
+
+            // xAxis_1999 = x_axis
+            // .append("g")
+            // // .style("opacity",0)
+            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            // .call(d3.axisBottom(x)
+            //         .tickValues([heatmaps.year])
+            //         .tickFormat(x => x)
+            //         .tickSize(-RectsHeight-margin.bottom))
+            //         .style("color","red")
+            //     .call(g => g.select(".tick text")
+            //         .attr("dy","1.5em")
+            //         .clone()
+            //         .attr("dy", "3em")
+            //         .style("font-weight", "bold")
+            //         .text("Columbine Event"))
+            //     .call(g => g.select(".domain").remove())
+            // xAxis_2003 = x_axis
+            // .append("g")
+            // // .style("opacity",0)
+            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
+            // .call(d3.axisBottom(x)
+            //         .tickValues([2003])
+            //         .tickFormat(x => x)
+            //         .tickSize(-RectsHeight-margin.bottom))
+            //         .style("color","red")
+            //     .call(g => g.select(".tick text")
+            //         .attr("dy","1.5em")
+            //         .clone()
+            //         .attr("dy", "3em")
+            //         .style("font-weight", "bold")
+            //         .text("Columbine Event"))
+            //     .call(g => g.select(".domain").remove())
+        }
+
+        if(heat_state_g){
+            heat_state_g.attr('opacity', 0);
+            legend.attr('opacity', 0);
+
+        }
+
+
 
     };
 
@@ -1070,12 +1163,14 @@ function scrollVis(){
         activateFunctions[1] = showMap;
         activateFunctions[2] = showMapDots;
         activateFunctions[3] = showMapGradient;
-        activateFunctions[4] = showHeat; // empty page
-        activateFunctions[5] = showHeatState;
-        activateFunctions[6] = showHeat;
-        activateFunctions[7] = showLine;
-        activateFunctions[8] = showPie;
-        activateFunctions[9] = showHeat;
+        activateFunctions[4] = showHeat;
+        activateFunctions[5] = showMapBigDot;
+        activateFunctions[6] = showHeat; // empty page
+        activateFunctions[7] = showHeatState;
+        activateFunctions[8] = showHeat;
+        activateFunctions[9] = showLine;
+        activateFunctions[10] = showPie;
+        activateFunctions[11] = showHeat;
 
         for (var i = 0; i < 10; i++) {
             updateFunctions[i] = function () {};
@@ -1090,6 +1185,7 @@ function scrollVis(){
         .transition()
         .duration(0)
         .attr('opacity', 1);
+
 
         hideMap(map_g);
         hideMaptext(map_text_g);
@@ -1139,14 +1235,25 @@ function scrollVis(){
     function showMapDots(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        var size = d3.scaleLinear()
+                 .domain([0,34])
+                 .range([3,10]);
         if(map_g){
             map_g
             .transition()
             .style("fill","#E5E4E2")
             circle_g
             .transition()
-            .duration(1000)
-            .attr('opacity', 1.0)
+            .duration(3000)
+            .attr('opacity', 1.0);
+            // circle_g
+            // .transition()
+            // .duration(1000)
+            // .attr('opacity', 1.0)
+            // .style("r", "3")
+            // .transition(8000)
+            // .style("r",d=>{console.log(size(d.casualties));return size(d.casualties)})
+            
         }
     }
     /**
@@ -1170,6 +1277,7 @@ function scrollVis(){
                     return "#E5E4E2"
                 };
             })
+            
         }
         if (map_text_g) {
             map_text_g
@@ -1180,11 +1288,48 @@ function scrollVis(){
         if(map_count_g){
             map_count_g
             .transition()
-            .duration(0)
+            .duration(3000)
             .attr('opacity', 1.0);
         }
     }
-
+    function showMapBigDot(){
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        var size = d3.scaleLinear()
+                 .domain([0,34])
+                 .range([3,10]);
+        if(map_g){
+            map_g
+            .transition()
+            .attr('opacity', 1.0)
+            .style("fill","#E5E4E2")
+            map_text_g
+            .transition()
+            .attr('opacity', 1.0)
+            circle_g
+            .transition()
+            .duration(1000)
+            .attr('opacity', 0.5)
+            // .style("fill", "black")
+            .style("r", "3")
+            .transition(8000)
+            .style("r",d=>{return size(d.casualties)})
+            .style("fill", d=>{
+                if(d.casualties > 8 ){
+                    // console.log("here")
+                    // console.log(d.school_name)
+                    // console.log(d.casualties)
+                    // console.log(d.state)
+                    return "#cb181d"
+                }
+            })
+            .style("opacity", d=>{
+                if(d.killed > 5 || d.injured > 5){
+                    return 1
+                }
+            })
+        }
+    }
     /**
      * showHeat - heatmap transition from gray to sequential
      *
@@ -1199,6 +1344,7 @@ function scrollVis(){
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hideLine(line_g);
+        hideDots(circle_g);
     }
     function showHeatState() {
         hideMap(map_g);
@@ -1207,6 +1353,7 @@ function scrollVis(){
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideLine(line_g);
         if (heat_state_g) {
+
             heat_state_g
             .transition()
             .duration(1000)
@@ -1220,37 +1367,58 @@ function scrollVis(){
             .duration(2000)
             .attr('opacity', 1.0);
                    
-            const rowHeight = 30;
+
+            const rowHeight = 25;
             const RectsHeight = rowHeight * heatmaps_state.highStates.length + margin.top + margin.bottom;
 
             // Update y-axis scale domain
-            y.domain(heatmaps_state.highStates)
-            .range([height/4+20, height/4+RectsHeight+20 - margin.bottom])
-            y_axis.transition()
-            .duration(6000)
-            .call(d3.axisLeft(y).tickSize(0))
-            .call(g => g.select(".domain").remove())
-            x_axis.transition()
-            .duration(6000)
-            .attr("transform", `translate(0,${height/4-height/15-10})`)
+            // y.domain(heatmaps_state.highStates)
+            // .range([height/7+20, height/7+RectsHeight+20 - margin.bottom])
+            // y_axis.transition()
+            // .duration(10000)
+            // .call(d3.axisLeft(y).tickSize(0))
+            // .call(g => g.select(".domain").remove())
+            // x_axis.transition()
+            // .duration(10000)
+            // .attr("transform", `translate(0,${height/7-height/20+10})`)
 
-            heat_state_g.selectAll("#long_rects")
-            .data(heatmaps_state.twoDArray)
-            .transition()
-            .duration(6000)
-            .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])? y(heatmaps_state.updatedStates[i]): -100})`)
+            // heat_state_g.selectAll("#long_rects")
+            // .data(heatmaps_state.twoDArray)
+            // .transition()
+            // .duration(10000)
+            // .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])? y(heatmaps_state.updatedStates[i]): -100})`)
+
             heat_state_g.selectAll("#small_rects")
-            .attr("height", y.bandwidth()-1)
+            // .attr("height", y.bandwidth()-1)
+            .each(function(d) {
+                const rect = d3.select(this);
+                rect.append("title").attr("id", "tooltip")
+                    .text(() => {
+                        if (d.events) {
+                            return d.events.map(event => `School: ${event.school_name}, Killed: ${event.killed}, Injured: ${event.injured}`).join('\n');
+                        } else {
+                            return 'No events available';
+                        }
+                    })
+            });
+            
+
         } 
+        
     }
    
 
 
     function showPie() {
-        
+      
         // hideMap();
         // hideMaptext();
         // hideHeat();
+        hideHeatState(heat_state_g,legend,heat_rects);
+
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
         hideLine(line_g);
         
         // ensure the axis to histogram one
@@ -1281,7 +1449,9 @@ function scrollVis(){
         // hideMaptext();
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideHeatState(heat_state_g,legend,heat_rects);
-        
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
         // ensure the axis to histogram one
         if (line_g) {
             line_g
@@ -1469,6 +1639,9 @@ function display(data) {
 .boarder{
   border-style: groove;
 }
+#small_rects .hover{
+    border: #262626 solid 1px;
+}
 #sections .title {
   font-family: Arial,Helvetica,"san-serif";
   font-size: 16px;
@@ -1478,8 +1651,6 @@ function display(data) {
   line-height: 1.2em;
 
 }
-
-
 
 
 
