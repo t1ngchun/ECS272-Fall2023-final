@@ -18,8 +18,7 @@ export function hideDots(circle_g) {
         circle_g
         .transition()
         .duration(0)
-        .attr('opacity', 0);
-        
+        .style('opacity', 0);
     }
 
 }
@@ -92,7 +91,6 @@ export function hideLine(line_g) {
         .duration(0)
         .attr('opacity', 0);
     }
-}
 
 export function hidePar(parellel_g){
     if(parellel_g){
