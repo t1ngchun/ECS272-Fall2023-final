@@ -505,7 +505,6 @@ function scrollVis(){
     let legend = null;
     let xAxis_1999 = null;
     let xAxis_2003 = null;
-    let line_g = null;
     let parallel_g = null;
 
     // for geomap
@@ -637,162 +636,7 @@ function scrollVis(){
 
 
 
-        // line chart
-  
-        if (lineChartData) {
-            console.log(lineChartData)
-            const x = d3.scaleLinear()
-                .domain(d3.extent(lineChartData, d => d.year))
-                .range([margin.left+50, width - margin.right - 50]);
-            
-            const y = d3.scaleLinear()
-                .domain([0, d3.max(lineChartData, d => d.age) + 1])
-                .range([height - margin.top, margin.bottom + 10]);
-            
-            // Define the line function
-            const line = d3.line()
-                .x(d => x(d.year))
-                .y(d => y(d.age));
 
-            // Define the line function
-            const avgAgeLine = d3.line()
-                .x(d => x(d.year))
-                .y(d => y(d.average));
-
-            line_g = g.append("g")
-            
-            // Draw the line
-            ageLine = line_g.append("path")
-                .datum(lineChartData)
-                .attr("fill", "none")
-                .attr("stroke", "steelblue")
-                .attr("stroke-width", 3)
-                .attr("d", line)
-                .attr("transform",  `translate(0, -${margin.bottom})`)
-                .attr('class', 'age-line')
-
-
-            // Draw the average line
-            avgLine = line_g.append("path")
-                .datum(lineChartData)
-                .attr("fill", "none")
-                .attr("stroke", "green")
-                .attr("stroke-width", 1)
-                .attr("d", avgAgeLine)
-                .attr("transform",  `translate(0, -${margin.bottom})`)
-                .attr('class', 'average-line')
-            
-            // Draw the average text
-            line_g.append("g")
-                .attr("transform",  `translate(${width - 90}, ${height / 2 - 70})`)
-                .append("text")
-                .style("font-size", 12)
-                .style("fill", "green")
-                .text("Average: 14")
-                .style("text-anchor", "middle")
-
-            // Draw the triangle mark
-            var sym = d3.symbol().type(d3.symbolTriangle).size(100); 
-            line_g.append("path") 
-                .attr("d", sym) 
-                .attr("fill", "red") 
-                .attr("transform", `translate(${width - 60}, ${height / 2 + 85}) rotate(180)`);
-
-            // Draw the lowest age text
-            line_g.append("g")
-                .attr("transform",  `translate(${width - 65}, ${height / 2 + 70})`)
-                .append("text")
-                .style("font-size", 15)
-                .style("fill", "red")
-                .style("font-weight", "bold")
-                .text("Age: 7")
-                .style("text-anchor", "middle")
-
-            line_g.append("path") 
-                .attr("d", sym) 
-                .attr("fill", "red") 
-                .attr("transform", `translate(${width / 2.5 + 15}, ${height / 12 - 20}) rotate(-90)`);
-
-            // Draw the highest age text
-            line_g.append("g")
-                .attr("transform",  `translate(${width / 2.5 + 55}, ${height / 12 - 15})`)
-                .append("text")
-                .style("font-size", 15)
-                .style("fill", "red")
-                .style("font-weight", "bold")
-                .text("Age: 23")
-                .style("text-anchor", "middle")
-
-
-            // Add x-axis
-            line_g.append("g")
-                .attr("transform", `translate(0, ${height - margin.bottom})`)
-                .call(d3.axisBottom(x).ticks(28).tickFormat(d => d.toString()))
-                .selectAll("text")
-                .style("text-anchor", "end")
-                .style("font-size", 10)
-                .attr("dx", "-.8em")
-                .attr("dy", "1em")
-                .attr("transform", `rotate(-35)`);
-            
-            // Add y-axis
-            line_g.append("g")
-                .attr("transform",  `translate(${margin.left+50}, ${- margin.bottom})`)
-                .call(d3.axisLeft(y))
-                .selectAll("text")
-                .style("text-anchor", "end")
-                .style("font-size", 10)
-            
-            // Add labels
-            line_g.append("text")
-                .attr("transform", `rotate(-90)`)
-                .attr("x", -200)
-                .attr("y", margin.top + 25)
-                .style("font-size", 15)
-                .text("Age");
-
-            // Words
-            line_g.append("g")
-                .attr("transform",  `translate(${margin.left + 100}, ${height - 180})`)
-                .append("text")
-                .style("font-size", 14)
-                .style("fill", "#767678")
-                .text("There could be various factors contributing to a decrease in the age of young shooters involved in school")
-            // Words
-            line_g.append("g")
-                .attr("transform",  `translate(${margin.left + 100}, ${height - 160})`)
-                .append("text")
-                .style("font-size", 14)
-                .style("fill", "#767678")
-                .text("shooting events over time. The factors may involve Access to Firearms, Mental Health, Copycat Behavior.")
-            // Words
-            line_g.append("g")
-                .attr("transform",  `translate(${margin.left + 100}, ${height - 140})`)
-                .append("text")
-                .style("font-size", 14)
-                .style("fill", "#767678")
-                .text("Accessibility to firearms among younger individuals might have increased.")
-            
-            // Words
-            line_g.append("g")
-                .attr("transform",  `translate(${margin.left + 100}, ${height - 120})`)
-                .append("text")
-                .style("font-size", 14)
-                .style("fill", "#767678")
-                .text("There might be a rise in mental health issues or social challenges affecting younger generations.")
-
-            // Words
-            line_g.append("g")
-                .attr("transform",  `translate(${margin.left + 100}, ${height - 100})`)
-                .append("text")
-                .style("font-size", 14)
-                .style("fill", "#767678")
-                .text("Media coverage and publicized incidents might influence copycat behavior among younger individuals.")
-        }
-
-        if (line_g) {
-            line_g.attr('opacity', 0)
-        }
 
         if(parallelChartData){
             parallel_g = g.append("g")
@@ -1277,7 +1121,6 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hidePar(parallel_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
-        hidePar(parellel_g);
         var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
@@ -1309,7 +1152,6 @@ function scrollVis(){
     function showMapGradient() {
         hideDots(circle_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
-        hideLine(line_g);
         hidePar(parallel_g);
         if (map_g) {
             map_g
@@ -1385,7 +1227,6 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideHeatState(heat_state_g,legend,heat_rects);
-        hideLine(line_g);
         hideDots(circle_g);
         hidePar(parallel_g);
     }
@@ -1395,7 +1236,6 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
-        hideLine(line_g);
         hideDots(circle_g);
         if(parallel_g){
             parallel_g
@@ -1409,7 +1249,6 @@ function scrollVis(){
         hideMaptext(map_text_g);
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
-        hideLine(line_g);
         hideDots(circle_g);
         hidePar(parallel_g);
         if (heat_state_g) {
@@ -1513,7 +1352,7 @@ function scrollVis(){
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
-        hideLine(line_g);
+
         
         // ensure the axis to histogram one
         if (deceased_pie_g) {
@@ -1549,30 +1388,7 @@ function scrollVis(){
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
-        // ensure the axis to histogram one
-        if (line_g) {
-            line_g
-            .transition()
-            .duration(600)
-            .attr('opacity', 1.0);
 
-            ageLine.call(transition);
-
-            avgLine.call(transition);
-
-
-            // line_g.append("path")
-            //     .datum(lineChartData)
-            //     .attr("fill", "none")
-            //     .attr("stroke", "steelblue")
-            //     .attr("stroke-width", 1)
-            //     .attr("d", line)
-            //     .attr('class', 'age-line')
-            //     .call(transition);
-            
-        }
-
-    }
 
     /**
      * showCough
@@ -1597,7 +1413,7 @@ function scrollVis(){
     //     .attr('height', function (d) { return height - yHistScale(d.length); })
     //     .style('opacity', 1.0);
 
-    // }
+    }
 
 
     /**
