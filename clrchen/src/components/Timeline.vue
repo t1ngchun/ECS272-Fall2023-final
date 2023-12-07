@@ -72,6 +72,7 @@ import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
 import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie, hidePar} from "./hidecomponent"
+
 import { filter, line, map, pie, sort } from "d3";
 import { h } from "vue";
 
@@ -137,20 +138,7 @@ function getOcc(data) {
 
     return formattedData;
 }
-// function getHeatMapData_casaulties(data){
-//     const casualtiesByState = {};
-//     data.forEach((incident) => {
-//         const state = incident.state;
-//         const casualties = incident.casualties;
 
-//         if (!casualtiesByState[state]) {
-//             casualtiesByState[state] = 0;
-//         }
-
-//         casualtiesByState[state] += casualties;
-//     });
-//     console.log(casualtiesByState);
-// }
 function getHeatMapData_state(data) {
     const infoData = data.map(item => {
         return {
@@ -280,7 +268,7 @@ function filteredPieChartData(data) {
 // for line chart
 function getShooterAgeData(data) {
     let filteredData = filteredPieChartData(data)
-    console.log(filteredData)
+    //console.log(filteredData)
     let acc = 0;
     let len = filteredData.length;
     filteredData.map((data) => {
@@ -421,11 +409,7 @@ d3.csv('../../data/school-shootings.csv')
         };
     });
     shootings = getOcc(loadedData);
-    // console.log(loadedData)
     heatmaps_state = getHeatMapData_state(convertedData)
-    // heatmaps_casaulties = getHeatMapData_casaulties(convertedData)
-    // event_info = getHeatMap_info(convertedData)
-    // console.log(heatmaps_state)
     display(convertedData)
 
     display(shootings)
@@ -654,7 +638,7 @@ function scrollVis(){
 
 
         // line chart
-        
+  
         if (lineChartData) {
             console.log(lineChartData)
             const x = d3.scaleLinear()
@@ -687,19 +671,6 @@ function scrollVis(){
                 .attr("transform",  `translate(0, -${margin.bottom})`)
                 .attr('class', 'age-line')
 
-
-            // const yExtents = d3.extent(lineChartData, d => d.age);
-            // line_g.selectAll(".dot")
-            //     .data(lineChartData)
-            //     .enter().append("circle")
-            //     .attr("class", "dot")
-            //     .attr("cx", d => x(d.year))
-            //     .attr("cy", d => y(d.age))
-            //     .attr("transform",  `translate(0, -${margin.bottom})`)
-            //     .attr('r', function (d) { 
-            //         return d.age == yExtents[0] || d.age == yExtents[1] ? 5 : 0;
-            //     })
-            //     .attr("fill", "red");
 
             // Draw the average line
             avgLine = line_g.append("path")
@@ -751,15 +722,6 @@ function scrollVis(){
                 .style("font-weight", "bold")
                 .text("Age: 23")
                 .style("text-anchor", "middle")
-
-
-            // avgAgeLine = line_g.append("path")
-            //     .datum(lineChartData)
-            //     .attr("fill", "none")
-            //     .attr("stroke", "steelblue")
-            //     .attr("stroke-width", 3)
-            //     .attr("d", line)
-            //     .attr('class', 'age-line')
 
 
             // Add x-axis
@@ -1315,6 +1277,7 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hidePar(parallel_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hidePar(parellel_g);
         var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
@@ -1546,6 +1509,7 @@ function scrollVis(){
         hideDots(circle_g);
         hidePar(parallel_g);
 
+
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
@@ -1581,6 +1545,7 @@ function scrollVis(){
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
         hidePar(parallel_g);
+
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
