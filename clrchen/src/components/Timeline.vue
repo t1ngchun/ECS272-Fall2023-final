@@ -71,7 +71,7 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
-import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie} from "./hidecomponent"
+import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie,hidePar} from "./hidecomponent"
 import { filter, line, map, pie, sort } from "d3";
 import { h } from "vue";
 
@@ -137,20 +137,7 @@ function getOcc(data) {
 
     return formattedData;
 }
-// function getHeatMapData_casaulties(data){
-//     const casualtiesByState = {};
-//     data.forEach((incident) => {
-//         const state = incident.state;
-//         const casualties = incident.casualties;
 
-//         if (!casualtiesByState[state]) {
-//             casualtiesByState[state] = 0;
-//         }
-
-//         casualtiesByState[state] += casualties;
-//     });
-//     console.log(casualtiesByState);
-// }
 function getHeatMapData_state(data) {
     const infoData = data.map(item => {
         return {
@@ -261,9 +248,11 @@ function filteredPieChartData(data) {
         let processedObj = {
             year: value.year,
             state: value.state,
-            killed: value.killed,
-            injured: value.injured,
+            killed: +value.killed,
+            injured: +value.injured,
             casualties: +value.casualties,
+            enrollment: +value.enrollment,
+            safe:(+value.enrollment)-(+value.casualties),
             age_shooter: parseInt(value.age_shooter1),
             shooting_type: filterShootingType(value.shooting_type),
             shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
@@ -279,7 +268,7 @@ function filteredPieChartData(data) {
 // for line chart
 function getShooterAgeData(data) {
     let filteredData = filteredPieChartData(data)
-    console.log(filteredData)
+    //console.log(filteredData)
     let acc = 0;
     let len = filteredData.length;
     filteredData.map((data) => {
@@ -404,6 +393,7 @@ let deceasedPieData = null;
 let shootingPieData = null;
 let weaponPieData = null;
 let lineChartData = null;
+let parellelChartData = null;
 let ageLine = null;
 let avgLine = null;
 
@@ -419,17 +409,13 @@ d3.csv('../../data/school-shootings.csv')
         };
     });
     shootings = getOcc(loadedData);
-    // console.log(loadedData)
     heatmaps_state = getHeatMapData_state(convertedData)
-    // heatmaps_casaulties = getHeatMapData_casaulties(convertedData)
-    // event_info = getHeatMap_info(convertedData)
-    // console.log(heatmaps_state)
     display(convertedData)
 
     display(shootings)
     display(heatmaps_state)
-    // console.log(shootings)
-
+    parellelChartData = filteredPieChartData(loadedData)
+    display(parellelChartData)
     lineChartData = getShooterAgeData(loadedData)
     display(lineChartData)
 
@@ -520,13 +506,14 @@ function scrollVis(){
     let xAxis_1999 = null;
     let xAxis_2003 = null;
     let line_g = null;
+    let parellel_g = null;
 
     // for geomap
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
     const countmap = new Map(shootings?.map(d => [d.name, d.value]));
     const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
     const color_state = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps_state.values1DArray)])
-    
+    const color_age = d3.scaleSequential(d3.interpolateYlOrBr).domain([10,32])
     //line chart
     function transition(path) {
         var totalLength = path.node().getTotalLength();
@@ -651,7 +638,7 @@ function scrollVis(){
 
 
         // line chart
-        
+        /*
         if (lineChartData) {
             console.log(lineChartData)
             const x = d3.scaleLinear()
@@ -684,19 +671,6 @@ function scrollVis(){
                 .attr("transform",  `translate(0, -${margin.bottom})`)
                 .attr('class', 'age-line')
 
-
-            // const yExtents = d3.extent(lineChartData, d => d.age);
-            // line_g.selectAll(".dot")
-            //     .data(lineChartData)
-            //     .enter().append("circle")
-            //     .attr("class", "dot")
-            //     .attr("cx", d => x(d.year))
-            //     .attr("cy", d => y(d.age))
-            //     .attr("transform",  `translate(0, -${margin.bottom})`)
-            //     .attr('r', function (d) { 
-            //         return d.age == yExtents[0] || d.age == yExtents[1] ? 5 : 0;
-            //     })
-            //     .attr("fill", "red");
 
             // Draw the average line
             avgLine = line_g.append("path")
@@ -748,15 +722,6 @@ function scrollVis(){
                 .style("font-weight", "bold")
                 .text("Age: 23")
                 .style("text-anchor", "middle")
-
-
-            // avgAgeLine = line_g.append("path")
-            //     .datum(lineChartData)
-            //     .attr("fill", "none")
-            //     .attr("stroke", "steelblue")
-            //     .attr("stroke-width", 3)
-            //     .attr("d", line)
-            //     .attr('class', 'age-line')
 
 
             // Add x-axis
@@ -832,6 +797,88 @@ function scrollVis(){
 
         if (line_g) {
             line_g.attr('opacity', 0)
+        }
+        */
+        if(parellelChartData){
+            parellel_g = g.append("g")
+            let key:string[] = ['age_shooter','injured','killed','safe']
+            let yAge = d3.scaleLinear()
+                            .domain(d3.extent(parellelChartData.map(d => d.age_shooter)) )
+                            .range([height- height/3, height/4])
+            let yInjured = d3.scaleLinear()
+                            .domain(d3.extent(parellelChartData.map(d => d.injured)) )
+                            .range([height- height/3, height/4])
+            let yKilled = d3.scaleLinear()
+                            .domain(d3.extent(parellelChartData.map(d => d.killed)) )
+                            .range([height- height/3, height/4])
+            let ySafe = d3.scaleLinear()
+                            .domain(d3.extent(parellelChartData.map(d => d.safe)) )
+                            .range([height- height/3, height/4])
+            
+            let xScale = d3.scalePoint()
+                  .range([margin.left, width - margin.right-50])
+                  .padding(0.01)
+                  .domain(key);
+            
+            var y = {}
+            y[key[0]] = yAge
+            y[key[1]] = yInjured
+            y[key[2]] = yKilled
+            y[key[3]] = ySafe
+
+            function path(d) {
+                return d3.line()(key.map(function(p) { return [xScale(p), y[p](d[p])+50]; }));
+            }
+            parellel_g.append('g')
+                .selectAll("myPath")
+                .data(parellelChartData)
+                .enter().append("path")
+                .attr("d",  path)
+                .style("fill", "none")
+                // .style("stroke","black")
+                .style("stroke", 
+                function(d){return color_age(d.age_shooter)})
+                .style("opacity", 0.7)
+                .style('stroke-width', '1px')
+            parellel_g.append("g").attr("transform", "translate(" + xScale(key[0]) + ",50)")
+            .call(d3.axisLeft(yAge))
+            .append("text")
+            .style("text-anchor", "middle")
+            .attr("y", height/5)
+            .text(key[0])
+            .style("fill", "black")
+            .style('font-size', '.9rem')
+
+            parellel_g.append("g").attr("transform", "translate(" + xScale(key[1]) + ",50)")
+            .call(d3.axisLeft(yInjured))
+            .append("text")
+            .style("text-anchor", "middle")
+            .attr("y", height/5)
+            .text(key[1])
+            .style("fill", "black")
+            .style('font-size', '.9rem')
+
+            parellel_g.append("g").attr("transform", "translate(" + xScale(key[2]) + ",50)")
+            .call(d3.axisLeft(yKilled))
+            .append("text")
+            .style("text-anchor", "middle")
+            .attr("y", height/5)
+            .text(key[2])
+            .style("fill", "black")
+            .style('font-size', '.9rem')
+
+            parellel_g.append("g")
+            .attr("transform", "translate(" + xScale(key[3]) + ",50)")
+            .call(d3.axisRight(ySafe))
+            .append("text")
+            .style("text-anchor", "middle")
+            .attr("y", height/5)
+            .text(key[3])
+            .style("fill", "black")
+            .style('font-size', '.9rem')
+        }
+        if(parellel_g){
+            parellel_g.attr('opacity', 0)
         }
         // pie chart
         var deceasedColor = d3.scaleOrdinal(['#d8e2dc', 'white', '#ffcad4','#d8e2dc' ]);
@@ -1191,7 +1238,8 @@ function scrollVis(){
         hideMaptext(map_text_g);
         hideMapcount(map_count_g);
         hideHeatState(heat_state_g,legend,heat_rects);
-        hideDots(circle_g)
+        hideDots(circle_g);
+        hidePar(parellel_g);
     }
     /**
      * showMap - draw the map
@@ -1230,11 +1278,13 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g )
         hideHeatState(heat_state_g,legend,heat_rects);
-        hideDots(circle_g)
+        hideDots(circle_g);
+        hidePar(parellel_g);
     }
     function showMapDots(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hidePar(parellel_g);
         var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
@@ -1267,6 +1317,7 @@ function scrollVis(){
         hideDots(circle_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideLine(line_g);
+        hidePar(parellel_g);
         if (map_g) {
             map_g
             .transition()
@@ -1295,6 +1346,7 @@ function scrollVis(){
     function showMapBigDot(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hidePar(parellel_g);
         var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
@@ -1345,6 +1397,12 @@ function scrollVis(){
         hideHeatState(heat_state_g,legend,heat_rects);
         hideLine(line_g);
         hideDots(circle_g);
+        if(parellel_g){
+            parellel_g
+            .transition()
+            .duration(0)
+            .attr('opacity', 1.0);
+        }
     }
     function showHeatState() {
         hideMap(map_g);
@@ -1352,6 +1410,7 @@ function scrollVis(){
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideLine(line_g);
+        hidePar(parellel_g);
         if (heat_state_g) {
 
             heat_state_g
@@ -1415,6 +1474,7 @@ function scrollVis(){
         // hideMaptext();
         // hideHeat();
         hideHeatState(heat_state_g,legend,heat_rects);
+        hidePar(parellel_g);
 
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
@@ -1449,6 +1509,7 @@ function scrollVis(){
         // hideMaptext();
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideHeatState(heat_state_g,legend,heat_rects);
+        hidePar(parellel_g);
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
