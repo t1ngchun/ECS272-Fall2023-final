@@ -1173,7 +1173,7 @@ function scrollVis(){
         activateFunctions[11] = showPie;
         activateFunctions[12] = showSomething;
 
-        for (var i = 0; i < 12; i++) {
+        for (var i = 0; i < 13; i++) {
             updateFunctions[i] = function () {};
         }
     };
