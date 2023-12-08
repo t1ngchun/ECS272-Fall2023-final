@@ -610,7 +610,7 @@ function scrollVis(){
             .attr("fill", '#d8e2dc');
         // Text content with multiple sentences
         const textContent = "- Event casualty have more impact on the lauching of gun law than.  event occurence of the year and state that happen shooting event.  the most does not mean that state has the most number of victims.";
-        const textContent2 = "- Since The United States has a long history of gun culture, the gun law.  is not strict enough to prevent the tragedy from happening.";
+        const textContent2 = "- Since The United States has a long history of gun culture, the gun.  law is not strict enough to prevent the tragedy from happening.";
         const textContent3 = "- The main resaons for happening young shooting events in school.  may be mental health issues, family issues, and media impact.";
         // Split text content into sentences
         const sentences = textContent.split('. ');
@@ -632,7 +632,7 @@ function scrollVis(){
             .text(d => d);
         const text2 = g.append("text").attr("id","text")
             .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
-            .attr("y", 50 + (rectHeight / 2)*5+50) // Center text vertically
+            .attr("y", 50 + (rectHeight / 2)*6+50) // Center text vertically
             .style("fill", "black")
             .attr("font-family", "Arial,Helvetica","san-serif")
             .style("font-size", "25px");
@@ -645,7 +645,7 @@ function scrollVis(){
             .text(d => d);
         const text3 = g.append("text").attr("id","text")
             .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
-            .attr("y", 50 + (rectHeight / 2)*9+50) // Center text vertically
+            .attr("y", 50 + (rectHeight / 2)*10+50) // Center text vertically
             .style("fill", "black")
             .attr("font-family", "Arial,Helvetica","san-serif")
             .style("font-size", "25px");
