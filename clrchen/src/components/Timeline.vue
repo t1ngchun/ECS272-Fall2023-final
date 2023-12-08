@@ -609,8 +609,8 @@ function scrollVis(){
             .attr("height", height-100)
             .attr("fill", '#d8e2dc');
         // Text content with multiple sentences
-        const textContent = "- Event casualty have more impact on the lauching of gun law than.  event occurence of the year and state that happen shooting event.  the most does not mean that state has the most number of victims.";
-        const textContent2 = "- Since The United States has a long history of gun culture, the gun.  law is not strict enough to prevent the tragedy from happening.";
+        const textContent = "- Event casualty have more impact on the lauching of gun law than.  event occurence of the year and state that happen shooting event.  the most does not mean it has the most number of victims.";
+        const textContent2 = "- Becaus of the long history of The United States gun culture, the gun.  law is not strict enough to prevent the tragedy from happening.";
         const textContent3 = "- The main resaons for happening young shooting events in school.  may be mental health issues, family issues, and media impact.";
         // Split text content into sentences
         const sentences = textContent.split('. ');
@@ -618,11 +618,13 @@ function scrollVis(){
         const sentences3 = textContent3.split('. ');
         // Append text within the rectangle using tspan for each sentence
         const text = g.append("text").attr("id","text")
-            .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
-            .attr("y", 50 + rectHeight / 2+50) // Center text vertically
+            .attr("x", rectHeight + 10) // Offset the text from the left edge of the rectangle
+            .attr("y", rectHeight + rectHeight / 2+rectHeight) // Center text vertically
             .style("fill", "black")
-            .attr("font-family", "Arial,Helvetica","san-serif")
-            .style("font-size", "25px");
+            .attr("font-family", "TiemposTextWeb-Regular","Georgia")
+            .style("font-size", "25px")
+            .style("font-color","#262626")
+            .style("font-weight", "bold");
 
         text.selectAll("tspan")
             .data(sentences)
@@ -631,11 +633,13 @@ function scrollVis(){
             .attr("dy", "1.2em") // Adjust spacing between lines
             .text(d => d);
         const text2 = g.append("text").attr("id","text")
-            .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
-            .attr("y", 50 + (rectHeight / 2)*6+50) // Center text vertically
+            .attr("x", rectHeight + 10) // Offset the text from the left edge of the rectangle
+            .attr("y", rectHeight + (rectHeight / 2)*6+rectHeight) // Center text vertically
             .style("fill", "black")
-            .attr("font-family", "Arial,Helvetica","san-serif")
-            .style("font-size", "25px");
+            .attr("font-family", "TiemposTextWeb-Regular","Georgia")
+            .style("font-size", "25px")
+            .style("font-color","#262626")
+            .style("font-weight", "bold");
 
         text2.selectAll("tspan")
             .data(sentences2)
@@ -644,27 +648,20 @@ function scrollVis(){
             .attr("dy", "1.2em") // Adjust spacing between lines
             .text(d => d);
         const text3 = g.append("text").attr("id","text")
-            .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
-            .attr("y", 50 + (rectHeight / 2)*10+50) // Center text vertically
+            .attr("x", rectHeight + 10) // Offset the text from the left edge of the rectangle
+            .attr("y", rectHeight + (rectHeight / 2)*10+rectHeight) // Center text vertically
             .style("fill", "black")
-            .attr("font-family", "Arial,Helvetica","san-serif")
-            .style("font-size", "25px");
+            .attr("font-family", "TiemposTextWeb-Regular","Georgia")
+            .style("font-size", "25px")
+            .style("font-color","#262626")
+            .style("font-weight", "bold");
 
         text3.selectAll("tspan")
             .data(sentences3)
             .enter().append("tspan")
-            .attr("x", 100+10) // Offset the text from the left edge of the rectangle
+            .attr("x", rectHeight*2+10) // Offset the text from the left edge of the rectangle
             .attr("dy", "1.2em") // Adjust spacing between lines
             .text(d => d);
-        // // Append text within the rectangle
-        // const text = g.append("text")
-        //     .attr("x", 50 ) // Center text horizontally
-        //     .attr("y", 50 + rectHeight / 2) // Center text vertically
-        //     // .attr("text-anchor", "middle") // Center align text horizontally
-        //     .attr("dominant-baseline", "middle") // Center align text vertically
-        //     .text("1. Event casualty are more related to the lauch of gun law than event occurence. Also, state that happen shooting event the most does not mean high casualty.")
-        //     .style("fill", "black")
-        //     .style("font-size", "16px");
 
 
 
@@ -885,7 +882,7 @@ function scrollVis(){
         // pie chart
         var deceasedColor = d3.scaleOrdinal(['#d8e2dc', 'white', '#ffcad4','#d8e2dc' ]);
         var shootingColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', 'white']);
-        var weaponColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', '#d8e2dc', '#d8e2dc', '#d8e2dc', 'white']);
+        var weaponColor = d3.scaleOrdinal(['#ffcad4', '#d8e2dc', 'white', '#d8e2dc', 'white', 'white']);
 
         if (deceasedPieData) {
             var pie = d3.pie()
