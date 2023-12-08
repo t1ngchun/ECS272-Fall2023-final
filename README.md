@@ -23,10 +23,9 @@ The layout is divided into two main sections:
 ## Visualization: Overview of the whole dataset
 The overview starts with a page briefly introducing the *Columbine Shooting Event* as shown in the figure.
 
+Once the user enter the section, a `story-telling` visualization is shown where each section represents a part of our story.
+
 <img src="./clrchen/data/overview.png" alt="drawing" width="auto"/>
-
-
-Once the user enter the next section, a `story-telling` visualization is shown where each section represents a part of our story.
 
 In the beginning, we'll show three `geographical maps` of the United States. In the first map, the state where Columbine Shooting Event occurred will be colored orange. The second map with different dots scattered around, each dot representing a school shooting event. For the last map, we show the states that have high occurrences over 10 shooting events from 1999 to 2023.
 
