@@ -3,7 +3,7 @@
 The system visualizes School Shootings Influenced by <em>Columbine Shooting Event</em> in the US.
 A <code>story-telling</code> design is used for user to scroll down and see the story by our designed flow.
 In addition to common charts, we annotate each section with text snippets scraped from web articles as descriptions of the gun culture in the US impact on the school shooting events.
-Using tempelate from https://github.com/vlandham/scroll_demo/tree/gh-pages
+Using tempelate from https://github.com/vlandham/scroll_demo/tree/gh-pages and picture from https://www.iconfinder.com/icons/2131923/gun_killing_school_shooting_terrorism_terrorist_war_icon
 
 ## Data set
 ### Kaggle
