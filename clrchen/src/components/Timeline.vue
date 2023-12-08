@@ -1112,6 +1112,17 @@ function scrollVis(){
                 .style("fill", "#767678")
                 .style('font-weight', 'bold');
 
+            // Optionally, add text labels for each rect
+            legend
+                .append("text")
+                .attr("transform", `rotate(90)`)
+                .attr("y", -210)
+                .attr("x", -40)
+                .text('number of events')
+                .style("fill", "#767678")
+                .style('font-weight', 'bold')
+                .style('font-size', 12);
+
 
 
             // xAxis_1999 = x_axis
