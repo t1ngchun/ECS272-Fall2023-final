@@ -609,9 +609,9 @@ function scrollVis(){
             .attr("height", height-100)
             .attr("fill", '#d8e2dc');
         // Text content with multiple sentences
-        const textContent = "- Event casualty have more impact on the lauching of gun law than.  event occurence of the year and state that happen shooting event.  the most does not mean it has the most number of victims.";
+        const textContent = "- Event casualty have more impact on the lauching of gun law than.  event occurence of the year and state in which shooting event happen.  the most frequently does not have the most number of victums.";
         const textContent2 = "- Becaus of the long history of The United States gun culture, the gun.  law is not strict enough to prevent the tragedy from happening.";
-        const textContent3 = "- The main resaons for happening young shooting events in school.  may be mental health issues, family issues, and media impact.";
+        const textContent3 = "- The main causes for happening young shooting events in school.  may be mental health issues, family issues, and media impact.";
         // Split text content into sentences
         const sentences = textContent.split('. ');
         const sentences2 = textContent2.split('. ');
@@ -695,7 +695,7 @@ function scrollVis(){
                 return projection([d.long,d.lat])[1];
             })
             .attr("r", 3)
-            .attr("fill", '#262626'); //'#bfd3e6','#9ebcda','#8c96c6','#8c6bb1','#88419d','#810f7c'
+            .attr("fill", '#767678'); //'#bfd3e6','#9ebcda','#8c96c6','#8c6bb1','#88419d','#810f7c'
             // Adding text labels
             map_text_g = g.append("g")
             .selectAll("text")
