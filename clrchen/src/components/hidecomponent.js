@@ -44,14 +44,28 @@ export function hideMapcount(map_count_g) {
   }
 }
 
-export function hideLine(line_g) {
-  if (line_g) {
-    line_g.transition().duration(0).attr("opacity", 0);
-  }
-}
-
 export function hidePar(parallel_g) {
   if (parallel_g) {
     parallel_g.transition().duration(0).attr("opacity", 0);
   }
+}
+
+export function hideCompare(){
+  d3.selectAll('.compare-title')
+  .transition()
+  .duration(0)
+  .attr('opacity', 0);
+}
+
+
+export function hideText(){
+  d3.selectAll("#textrect")
+  .transition()
+  .duration(0)
+  .attr('opacity', 0);
+
+  d3.selectAll("#text")
+  .transition()
+  .duration(0)
+  .attr('opacity', 0);
 }

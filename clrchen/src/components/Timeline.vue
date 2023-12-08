@@ -1,61 +1,75 @@
 <template>
     <div id='graphic'>
         <div id='sections'>
-            <section class="step ">
+            <section class="step">
+                reference: <br>
+                <a href="https://www.kaggle.com/datasets/joebeachcapital/school-shootings">Dataset/</a>
+                <a href="https://www.iconfinder.com/icons/2131923/gun_killing_school_shooting_terrorism_terrorist_war_icon">Picture</a>
             </section>
             <section class="step boarder">
-                <div class="title">What happened the Columbine High School Event?</div>
+                <div class="title">What happened in the Columbine High School Event?</div>
                 <span id="intro">
                     The Columbine High School massacre was a school shooting incident 
-                    that occurred on April 20, 1999, at Columbine High School in Colorado, USA. Two teenage students armed with firearms and explosives, 
+                    that occurred on <span style="font-weight: bold;">April 20, 1999, at Columbine High School in Colorado, USA</span>. Two teenage students armed with firearms and explosives, 
                     entered the campus, resulting in the shooting deaths of 12 students and 1 teacher, 
                     with 21 others injured. Subsequently, both of them took their own lives. 
-                    This event is regarded as the deadliest school shooting incident in American history. 
+                    <span style="font-weight: bold;">This event is regarded as the deadliest school shooting incident in American history. </span>
                     The term "Columbine" became synonymous  with school shootings.
                 </span>
             </section>
             <section class="step boarder">
                 <div class="title">The Columbine Shooting Event triggers a lots of school shooting events in the U.S. since 1999 until now.</div>
+                There are total 387 events. <br>
             </section>
             <section class="step boarder">
-                <div class="title">We focus on the states which has high frequency of events occurence.</div>
-                During this period of time, we found out that California (40), Texas (25), Florida (24), and North Carolina (21) have the most number of school shooting events.
-            </section>
-            <section class="step boarder">
+                <div class="title">We notice that some of the states has high frequency of events occurence.</div>
+                During this period of time, we found out California (40), Texas (25), Florida (24) have the most number of school shooting events.
                 <div class="title">Why do these states have high occurence?</div>
-                1. Gun Culture and Legislation<br>
+                1. Gun Culture / Legislation<br>
                 2. Popularity Density<br>
                 3. Geographical Location<br>
             </section>
             <section class="step boarder">
-                <div class="title">Next, our question is how about the most tragedy event? When did they happened?</div>
+                <div class="title">We delve into the history about Gun Law of the U.S.</div>
+                1. <span style="font-weight: bold;">Gun Culture / Legislation</span><br>
+                2. Popularity Density<br>
+                3. Geographical Location<br>
             </section>
             <section class="step boarder">
-                <div class="title">We break down into individual years, aimming to identify the most frequently occurring year and the most tragic events happened year.</div>
-                
+                <div class="title">We break down into individual years, the heatmap shows the occurence of the events in each year.</div>
+                However, when hovering through rectangle with dark color, the year it happened does not fit the year those legislation we mentioned before launched. 
             </section>
             <section class="step boarder">
-                <div class="title">Besides the Columbine event, these are the serious events happened in the U.S. since 1999. All of them cause the casualties more than ten people.</div>
+                <div class="title">We give border to the rectangle which contain the high casualties event. Events with the most victims are:</div>
+                - <span style="font-weight: bold;">Columbine High School</span> <br>1999, Colorado, with 34 victims<br>
+                - <span style="font-weight: bold;">Sandy Hook Elementary School</span><br> 2012, Connecticut, with 28 victims<br>
+                - <span style="font-weight: bold;">Santa Fe High School</span> <br>2018, Texas, with 34 victims<br>
+                - <span style="font-weight: bold;">Parkland High School</span><br> 2018, Florida, with 23 victims<br>
+                - <span style="font-weight: bold;">Robb Elementary School</span><br> 2022, Texas, with 33 victims<br>
             </section>
             <section class="step boarder">
-                <div class="title">How old are the shooter?</div>
-                This figure shows the trend of the age of young shooters from 1999 to 2023.
-                <div class="title">We found that the age of young shooters is decreasing.</div>
-                THe youngest shooter appears is year 2023 with only 7 year-old.
+                <div class="title">We start to think about which attribute is more important when we analyze school shooting event? </div>
+                Occurence? or Casualty?
             </section>
             <section class="step boarder">
-                <div class="title">Background Information of the Young Shooters</div>
-                1. Access to Firearms<br>
-                - Where did they get the weapon?                
-                2. Mental Health <br>
-                - Did they commit suicide after?<br>
-                3. Social Challenges<br>
-                - Did they do it on purpose?<br>
-
+                <div class="title">We start putting our attention on these tragedy event with high casualties.</div>
+                With the same US map showing before but highlighting those with casualties more than 10 people. There are 9 events in total.
             </section>
             <section class="step boarder">
-                <div class="title">Takeaway</div>
-                Takeaway
+                <div class="title">We observed a correspondence between high-casualty events and the introduction of legislation in the same year.</div>
+            </section>
+            <section class="step boarder">
+                <div class="title">How old are the shooter? How many victims are there in these events?</div>
+                We found out that the average age of the shooter who commit serious shooting is higher than the average age of all shooting events.
+            </section>
+            <section class="step boarder">
+                <div class="title">Background Information of the Shooters of school shooting with serious casualties</div>
+                1. Where did they get the weapon? Is there any family issues among them?<br>
+                2. Did they commit suicide after? Do they have mental health issues?<br>
+                3. Did they hurt certain people? Are those copycat behaviors?<br>
+            </section>
+            <section class="step boarder">
+                After exploring the data, this is our takeaway.
             </section>
         </div>
         <div id='vis'>
@@ -71,7 +85,7 @@ import { nest } from 'd3-collection';
 import scroller from "../scroller"
 import { states, provinces, occurence } from "./constants"
 import { filterShootingType, filterShooterDeceased, filterWeaponSource, groupBy } from "./utils"
-import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideLine, hidePie, hidePar} from "./hidecomponent"
+import { hideMap, hideMaptext, hideMapcount, hideDots, hideHeatState, hideCompare, hidePie, hidePar, hideText} from "./hidecomponent"
 
 import { filter, line, map, pie, sort } from "d3";
 import { h } from "vue";
@@ -110,7 +124,6 @@ function getOcc(data) {
     const median = d3.median(sortedValues);
     const Q3 = 15//d3.quantile(sortedValues, 0.75);
     const max = d3.max(sortedValues);
-    // Define ranges based on these percentiles
     const rangeLow = [min, Q1];
     const rangeModerate = [Q1, median];
     const rangeHigh = [median, Q3];
@@ -149,7 +162,6 @@ function getHeatMapData_state(data) {
             year: !isNaN(item.year) ? +item.year : item.year
         };
     });
-    // console.log("infoData before mappingL ",infoData);
     const years = [...new Set(data.map(item => item.year))]
     const states = [...new Set(data.map(item => item.state))]
     //map occurence value to state
@@ -203,11 +215,8 @@ function getHeatMapData_state(data) {
     const values1DArray = Object.values(countByYearCategory).flatMap(yearCounts =>
         Object.values(yearCounts)
     );
-    // console.log("twoD before adding: ", twoDArray);
     twoDArray.forEach((stateArray, stateIndex) => {
-    // Loop through each year's data for the state
         stateArray.forEach((yearData, yearIndex) => {
-            // Find all corresponding infoData for this state and year
             const correspondingInfo = infoData.filter(item => {
                 return (
                     item.state === yearData.state &&
@@ -215,7 +224,6 @@ function getHeatMapData_state(data) {
                 );
             });
 
-            // If correspondingInfo is found, add events array to twoDArray element
             if (correspondingInfo.length > 0) {
                 twoDArray[stateIndex][yearIndex].events = correspondingInfo.map(item => ({
                     school_name: item.school_name,
@@ -227,9 +235,6 @@ function getHeatMapData_state(data) {
             }
         });
     });
-
-
-    // console.log("after",highStates);
     return {
         twoDArray,
         values1DArray,
@@ -253,7 +258,7 @@ function filteredPieChartData(data) {
             injured: +value.injured,
             casualties: +value.casualties,
             safe: (+value.enrollment)-(+value.casualties),
-            age_shooter: parseInt(value.age_shooter1),
+            age_shooter: +(value.age_shooter1),
             shooting_type: filterShootingType(value.shooting_type),
             shooter_deceased: filterShooterDeceased(value.shooter_deceased1, value.deceased_notes1),
             weapon_source: filterWeaponSource(value.weapon_source),
@@ -262,7 +267,7 @@ function filteredPieChartData(data) {
             formattedData.push(processedObj);
         }
     });
-    formattedData = formattedData.filter(d => d.casualties > 8 )
+    formattedData = formattedData.filter(d => d.casualties > 10 )
     return formattedData;
 }
 // for line chart
@@ -310,7 +315,7 @@ function getDeceasedData(data) {
 
     return [
         { name: 'alive', value: alive / 13},
-        { name: 'others or N/A', value: others / 13},
+        { name: 'N/A', value: others / 13},
         { name: 'suicide', value: suicide / 13},
         { name: 'killed by police', value: police / 13},
     ];
@@ -341,7 +346,7 @@ function getShootingData(data) {
         { name: 'targeted', value: targeted / 13},
         { name: 'indiscriminate', value: indiscriminate / 13},
         { name: 'accidental', value: accidental / 13},
-        { name: 'others or N/A', value: others / 13},
+        { name: 'N/A', value: others / 13},
     ];
 }
 function getWeaponData (data) {
@@ -381,7 +386,7 @@ function getWeaponData (data) {
         { name: 'friend', value: friend / 13},
         { name: 'stolen', value: stolen / 13},
         { name: 'purchased', value: purchased / 13},
-        { name: 'others or N/A', value: others / 13},
+        { name: 'N/A', value: others / 13},
     ];
 }
 
@@ -394,9 +399,6 @@ let shootingPieData = null;
 let weaponPieData = null;
 let lineChartData = null;
 let parallelChartData = null;
-let ageLine = null;
-let avgLine = null;
-
 d3.csv('../../data/school-shootings.csv')
   .then(function(loadedData) {
     convertedData = loadedData.map(item => {
@@ -415,19 +417,17 @@ d3.csv('../../data/school-shootings.csv')
     display(shootings)
     display(heatmaps_state)
     parallelChartData = filteredPieChartData(convertedData)
+    // console.log(parallelChartData)
     display(parallelChartData)
     lineChartData = getShooterAgeData(loadedData)
     display(lineChartData)
 
-    deceasedPieData = getDeceasedData(loadedData)
+    deceasedPieData = getDeceasedData(loadedData).filter(d => d.value > 0)
     display(deceasedPieData)
-    deceasedPieData = deceasedPieData.filter(d => d.value > 0)
-    shootingPieData = getShootingData(loadedData)
+    shootingPieData = getShootingData(loadedData).filter(d => d.value > 0)
     display(shootingPieData)
-    shootingPieData = shootingPieData.filter(d => d.value > 0)
-    weaponPieData = getWeaponData(loadedData)
+    weaponPieData = getWeaponData(loadedData).filter(d => d.value > 0)
     display(weaponPieData)
-    weaponPieData = weaponPieData.filter(d => d.value > 0)
   })
   .catch(function(error) {
     console.error('Error loading data:', error);
@@ -442,10 +442,7 @@ d3.json('../../data/states-albers-10m.json')
   .catch(function(error) {
     console.error('Error loading data:', error);
   });
-let gun = null;
-d3.xml('../../data/gun-svgrepo-com.svg').then(svgData => {
-    gun = svgData
-});
+
 
 
 function scrollVis(){
@@ -488,7 +485,9 @@ function scrollVis(){
         });
     };
 
-
+    let img = null;
+    let img_law = null;
+    let imag_event = null;
     let map_count_g = null;
     let map_text_g = null;
     let map_g = null;
@@ -503,6 +502,7 @@ function scrollVis(){
     let weapon_pie_g = null;
     let heat_rects = null;
     let legend = null;
+    let legend_p = null;
     let xAxis_1999 = null;
     let xAxis_2003 = null;
     let parallel_g = null;
@@ -511,47 +511,168 @@ function scrollVis(){
     const valuemap = new Map(shootings?.map(d => [d.name, d.occ_cat]));
     const countmap = new Map(shootings?.map(d => [d.name, d.value]));
     const color_gradient = d3.scaleOrdinal(d3.schemeReds[4]).domain(["Low", "Moderate", "High", "Very High"])
-    const color_state = d3.scaleSequential(d3.interpolateBuPu).domain([0, d3.max(heatmaps_state.values1DArray)])
-    const color_age = d3.scaleSequential(d3.interpolateYlOrBr).domain([10, 32])
-    //line chart
-    function transition(path) {
-        var totalLength = path.node().getTotalLength();
-        path.attr("stroke-dasharray", totalLength)
-            .attr("stroke-dashoffset", totalLength)
-            .transition()
-            .duration(2000)
-            .attr("stroke-dashoffset", 0);
-    }
+    const color_state = d3.scaleOrdinal(d3.schemeBuPu[6]).domain(["0", "1", "2", "3", "4", "5", "6"])
+
 
     var setupVis = function () {
+        
+        img = g.append("g:image").attr("class","coverimg").attr("id","coverimg")
+                    .attr("xlink:href", "../../data/shooting_img.png")
+                    .attr("opacity", 1.0)
+                    // .attr("width", width*4.5/5)
+                    // .attr("y", height/2-100)
+        img_law = g.append("g:image").attr("class","lawimg")
+        .attr("xlink:href", "../../data/law.png")
+        .attr("opacity", 1.0)
+        .attr("width", width*4.5/5)
+        .attr("x",margin.left+10)
+        .attr("y", height/2-100)
+        .attr("opacity",0)
+
+        imag_event = g.append("g:image").attr("class","laweventimg")
+        .attr("xlink:href", "../../data/law_event.png")
+        .attr("opacity", 1.0)
+        .attr("width", width*4.5/5)
+        .attr("x",margin.left+10)
+        .attr("y", height/8)
+        .attr("opacity",0)
+
+
+
         g.append('text')
         .attr('class', 'title event-title')
         .attr('x', width / 2)
-        .attr('y', height / 3)
-        .text('School Shootings')
-        .attr('font-size', '60px')
+        .attr('y', height / 5)
+        .text('School Shootings Event in the US')
+        .attr('font-size', '50px')
+        .attr("font-family", "TiemposTextWeb-Regular","Georgia")
         .attr("font-weight", "bold")
         .attr('text-anchor', 'middle');
 
         g.append('text')
         .attr('class', 'sub-title event-title')
         .attr('x', width / 2)
-        .attr('y', (height / 3) + (height / 7))
-        .text('Influenced by Columbine Shooting Event in the US')
+        .attr('y', (height / 5) + (height / 10))
+        .text('Influenced by Columbine Shooting Event')
         .attr('text-anchor', 'middle')
         .attr("font-size", "30px")
         .attr("font-family", "TiemposTextWeb-Regular","Georgia")
         .attr("fill", "#767678");
-
-
-
         g.selectAll('.event-title')
         .attr('opacity', 0);
+
+
+        g.append('text')
+        .attr('class', 'title compare-title')
+        .attr('x', width/2)
+        .attr('y', height / 4)
+        .text('Occurence')
+        .attr('font-size', '100px')
+        .attr("font-family", "TiemposTextWeb-Regular","Georgia")
+        .attr("font-weight", "bold")
+        .attr('text-anchor', 'middle');
+
+        g.append('text')
+        .attr('class', 'title compare-title')
+        .attr('x', width/2)
+        .attr('y', height / 2)
+        .text('V.S.')
+        .attr('font-size', '100px')
+        .attr("font-family", "TiemposTextWeb-Regular","Georgia")
+        .attr("font-weight", "bold")
+        .attr('text-anchor', 'middle');
+
+
+        g.append('text')
+        .attr('id', 'casualties')
+        .attr('class', 'title compare-title')
+        .attr('x', width/2)
+        .attr('y', height-height/4)
+        .text('Casualty')
+        .attr('font-size', '100px')
+        .attr("font-family", "TiemposTextWeb-Regular","Georgia")
+        .attr("font-weight", "bold")
+        .attr('text-anchor', 'middle');
+        g.selectAll('.compare-title')
+        .attr('opacity', 0);
+
+
+
+        const rectWidth = 300;
+        const rectHeight = 50;
+
+        // Append a rectangle
+        const rectangle = g.append("rect").attr("id","textrect")
+            .attr("x", 50)
+            .attr("y", 50)
+            .attr("width", width-120)
+            .attr("height", height-100)
+            .attr("fill", '#d8e2dc');
+        // Text content with multiple sentences
+        const textContent = "- Event casualty have more impact on the lauching of gun law than.  event occurence of the year and state that happen shooting event.  the most does not mean that state has the most number of victims.";
+        const textContent2 = "- Since The United States has a long history of gun culture, the gun law.  is not strict enough to prevent the tragedy from happening.";
+        const textContent3 = "- The main resaons for happening young shooting events in school.  may be mental health issues, family issues, and media impact.";
+        // Split text content into sentences
+        const sentences = textContent.split('. ');
+        const sentences2 = textContent2.split('. ');
+        const sentences3 = textContent3.split('. ');
+        // Append text within the rectangle using tspan for each sentence
+        const text = g.append("text").attr("id","text")
+            .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
+            .attr("y", 50 + rectHeight / 2+50) // Center text vertically
+            .style("fill", "black")
+            .attr("font-family", "Arial,Helvetica","san-serif")
+            .style("font-size", "25px");
+
+        text.selectAll("tspan")
+            .data(sentences)
+            .enter().append("tspan")
+            .attr("x", 100 + 10) // Offset the text from the left edge of the rectangle
+            .attr("dy", "1.2em") // Adjust spacing between lines
+            .text(d => d);
+        const text2 = g.append("text").attr("id","text")
+            .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
+            .attr("y", 50 + (rectHeight / 2)*5+50) // Center text vertically
+            .style("fill", "black")
+            .attr("font-family", "Arial,Helvetica","san-serif")
+            .style("font-size", "25px");
+
+        text2.selectAll("tspan")
+            .data(sentences2)
+            .enter().append("tspan")
+            .attr("x", 100+10) // Offset the text from the left edge of the rectangle
+            .attr("dy", "1.2em") // Adjust spacing between lines
+            .text(d => d);
+        const text3 = g.append("text").attr("id","text")
+            .attr("x", 50 + 10) // Offset the text from the left edge of the rectangle
+            .attr("y", 50 + (rectHeight / 2)*9+50) // Center text vertically
+            .style("fill", "black")
+            .attr("font-family", "Arial,Helvetica","san-serif")
+            .style("font-size", "25px");
+
+        text3.selectAll("tspan")
+            .data(sentences3)
+            .enter().append("tspan")
+            .attr("x", 100+10) // Offset the text from the left edge of the rectangle
+            .attr("dy", "1.2em") // Adjust spacing between lines
+            .text(d => d);
+        // // Append text within the rectangle
+        // const text = g.append("text")
+        //     .attr("x", 50 ) // Center text horizontally
+        //     .attr("y", 50 + rectHeight / 2) // Center text vertically
+        //     // .attr("text-anchor", "middle") // Center align text horizontally
+        //     .attr("dominant-baseline", "middle") // Center align text vertically
+        //     .text("1. Event casualty are more related to the lauch of gun law than event occurence. Also, state that happen shooting event the most does not mean high casualty.")
+        //     .style("fill", "black")
+        //     .style("font-size", "16px");
+
+
 
         // draw the map
         if (us) {
             let path = d3.geoPath()
-            map_g = g.append("g")            
+            
+            map_g = g.append("g")         
             .selectAll("path")
             .data(topojson.feature(us, us.objects.states).features)
             .enter().append("path")
@@ -565,7 +686,7 @@ function scrollVis(){
             var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
-            circle_g = g.append("g")            
+            circle_g = g.append("g").attr("id","circle_g_p").append("g")             
             .selectAll("circle")
             .data(convertedData.filter(d=>d.long!=0 && d.lat!=0))
             .enter()
@@ -577,7 +698,7 @@ function scrollVis(){
                 return projection([d.long,d.lat])[1];
             })
             .attr("r", 3)
-            .attr("fill", "#fc9272"); //fc9272fb6a4aef3b2c
+            .attr("fill", '#262626'); //'#bfd3e6','#9ebcda','#8c96c6','#8c6bb1','#88419d','#810f7c'
             // Adding text labels
             map_text_g = g.append("g")
             .selectAll("text")
@@ -633,37 +754,35 @@ function scrollVis(){
         if (circle_g) {
             circle_g.attr('opacity', 0);
         }
-
-
-
-
-
         if(parallelChartData){
             parallel_g = g.append("g")
-            let key:string[] = ['age_shooter','injured','killed','safe']
+            let key:string[] = ['age_shooter','casualties','injured','killed']
             let yAge = d3.scaleLinear()
                             .domain(d3.extent(parallelChartData.map(d => d.age_shooter)) )
                             .range([height- height/3, height/4])
             let yInjured = d3.scaleLinear()
                             .domain(d3.extent(parallelChartData.map(d => d.injured)) )
+                            .nice()
                             .range([height- height/3, height/4])
             let yKilled = d3.scaleLinear()
                             .domain(d3.extent(parallelChartData.map(d => d.killed)) )
+                            .nice()
                             .range([height- height/3, height/4])
             let ySafe = d3.scaleLinear()
-                            .domain(d3.extent(parallelChartData.map(d => d.safe)) )
+                            .domain(d3.extent(parallelChartData.map(d => d.casualties)) )
+                            .nice()
                             .range([height- height/3, height/4])
             
             let xScale = d3.scalePoint()
-                  .range([margin.left, width - margin.right-50])
+                  .range([margin.left+20, width - margin.right-100])
                   .padding(0.01)
                   .domain(key);
             
             var y = {}
             y[key[0]] = yAge
-            y[key[1]] = yInjured
-            y[key[2]] = yKilled
-            y[key[3]] = ySafe
+            y[key[1]] = ySafe
+            y[key[2]] = yInjured
+            y[key[3]] = yKilled
 
             function path(d) {
                 return d3.line()(key.map(function(p) { return [xScale(p), y[p](d[p])+50]; }));
@@ -674,47 +793,90 @@ function scrollVis(){
                 .enter().append("path")
                 .attr("d",  path)
                 .style("fill", "none")
-                // .style("stroke","black")
-                .style("stroke", 
-                function(d){return color_age(d.age_shooter)})
+                .style("stroke","#cb181d")
                 .style("opacity", 0.7)
-                .style('stroke-width', '1px')
+                .style('stroke-width', '1.5px')
             parallel_g.append("g").attr("transform", "translate(" + xScale(key[0]) + ",50)")
-            .call(d3.axisLeft(yAge))
+            .call(d3.axisLeft(yAge)
+            .tickFormat(d => {
+               return d.toString()
+             })
+             .ticks(6, "f"))
             .append("text")
             .style("text-anchor", "middle")
             .attr("y", height/5)
             .text(key[0])
-            .style("fill", "black")
+            .style("fill", "#767678")
+            .style('font-weight', 'bold')
             .style('font-size', '.9rem')
 
             parallel_g.append("g").attr("transform", "translate(" + xScale(key[1]) + ",50)")
-            .call(d3.axisLeft(yInjured))
+            .call(d3.axisLeft(ySafe)
+            .tickFormat(d => {
+               return d.toString()
+             })
+             )
             .append("text")
             .style("text-anchor", "middle")
             .attr("y", height/5)
             .text(key[1])
-            .style("fill", "black")
+            .style("fill", "#767678")
+            .style('font-weight', 'bold')
             .style('font-size', '.9rem')
 
             parallel_g.append("g").attr("transform", "translate(" + xScale(key[2]) + ",50)")
-            .call(d3.axisLeft(yKilled))
+            .call(d3.axisLeft(yInjured)
+            .tickFormat(d => {
+               return d.toString()
+             }))
             .append("text")
             .style("text-anchor", "middle")
             .attr("y", height/5)
             .text(key[2])
-            .style("fill", "black")
+            .style("fill", "#767678")
+            .style('font-weight', 'bold')
             .style('font-size', '.9rem')
 
             parallel_g.append("g")
             .attr("transform", "translate(" + xScale(key[3]) + ",50)")
-            .call(d3.axisRight(ySafe))
+            .call(d3.axisRight(yKilled)
+            .tickFormat(d => {
+               return d.toString()
+             }))
             .append("text")
             .style("text-anchor", "middle")
             .attr("y", height/5)
             .text(key[3])
-            .style("fill", "black")
+            .attr("fill", "gray")
+            .style('font-weight', 'bold')
             .style('font-size', '.9rem')
+
+            // Draw the triangle mark
+            var sym = d3.symbol().type(d3.symbolTriangle).size(100); 
+            parallel_g.append("g")
+                .attr("transform",  `translate(${xScale('age_shooter')+85}, ${yAge(17.5)+55})`)
+                .append("text")
+                .style("font-size", 15)
+                .style("fill", 'black') //'#ffcad4'
+                .style("font-weight", "bold")
+                .text("Average Age: 17.5")
+                .style("text-anchor", "middle")
+            parallel_g.append("path") 
+                .attr("d", sym) 
+                .attr("fill", 'black') 
+                .attr("transform", `translate(${xScale('age_shooter')+10}, ${yAge(17.5)+50}) rotate(270)`);
+            parallel_g.append("g")
+            .attr("transform",  `translate(${xScale('age_shooter')+100}, ${yAge(15)*2-yAge(16)+55})`)
+            .append("text")
+            .style("font-size", 15)
+            .style("fill", '#767678') //'#ffcad4'
+            .style("font-weight", "bold")
+            .text("Average Age (all) : 14")
+            .style("text-anchor", "middle")
+            parallel_g.append("path") 
+                .attr("d", sym) 
+                .attr("fill", '#767678') 
+                .attr("transform", `translate(${xScale('age_shooter')+10}, ${yAge(15)*2-yAge(16)+50}) rotate(270)`);
         }
         if(parallel_g){
             parallel_g.attr('opacity', 0)
@@ -786,7 +948,7 @@ function scrollVis(){
                 .outerRadius(120)
             
             shooting_pie_g = g.append("g")
-                .attr("transform", `translate(${width*0.54}, ${height*0.74})`);
+                .attr("transform", `translate(${width*0.5}, ${height*0.74})`);
             
             var arcs = shooting_pie_g.selectAll("arc")
                 .data(pie)
@@ -883,7 +1045,7 @@ function scrollVis(){
         }
 
         if(heatmaps_state){
-            heat_state_g = g.append("g").attr("id","heat_state_g")
+            heat_state_g = g.append("g").attr("id","heat_state_g").append("g")
             const rowHeight = 12;
             const RectsHeight = rowHeight * heatmaps_state.updatedStates.length + margin.top + margin.bottom;
             x = d3.scaleLinear()
@@ -921,73 +1083,32 @@ function scrollVis(){
                     .attr("fill", d => {return color_state(d.value)})
 
         
-            // legend
             const legendWidth = 200;
             const legendHeight = 15;
-            const numColorSteps = 100; 
 
             legend = heat_state_g.append("g")
                 .attr("class", "legend")
-                .attr("transform", `translate(${margin.left + 5},${height/1.5}) rotate(-90)`);
+                .attr("transform", `translate(${margin.left + 5},${height / 1.5}) rotate(-90)`);
 
+            const colorRange = Array.from({ length: 6 }, (_, i) => i.toString());
 
-            const defs = legend.append("defs");
-            const linearGradient = defs.append("linearGradient")
-                .attr("id", "legendGradient")
-                .attr("x1", "0%")
-                .attr("y1", "0%")
-                .attr("x2", "100%")
-                .attr("y2", "0%");
-
-            const domainValues = color_state.domain();
-            const step = (domainValues[1] - domainValues[0]) / numColorSteps;
-            for (let i = 0; i <= numColorSteps; i++) {
-                linearGradient.append("stop")
-                    .attr("offset", `${(i * 100) / numColorSteps}%`)
-                    .attr("stop-color", color_state(domainValues[0] + step * i));
-            }
-
-            legend.append("rect")
-                .attr("x",  -legendWidth)
-                .attr("y",-15)
-                .attr("width", legendWidth)
+            legend.selectAll("rect")
+                .data(colorRange)
+                .enter().append("rect")
+                .attr("x", (d, i) => i * (legendWidth / 6))
+                .attr("y", -15)
+                .attr("width", legendWidth / 6)
                 .attr("height", legendHeight)
-                .attr("transform", `rotate(-180) `)
-                .style("fill", "url(#legendGradient)");
+                .style("fill", d => color_state(d));
 
-            const colorRange = Array.from({ length: 6 }, (_, i) => domainValues[0] + ((domainValues[1] - domainValues[0])/5 * i));
-
-            const positionsInLegend = colorRange.map(value => {
-                const mappedPosition = ((value - color_state.domain()[0]) / (color_state.domain()[1] - color_state.domain()[0])) * legendWidth;
-                return mappedPosition;
-            });
-
-
-            const lengendValPos = colorRange.map((value, index) => {
-                return {
-                    value: parseInt(value.toFixed(1)),
-                    position: positionsInLegend[index]
-                };
-            });
-
-            legend.selectAll("line.quantile")
-                .data(lengendValPos)
-                .enter().append("line")
-                .attr("class", "quantile")
-                .attr("x1", d => (d.position))
-                .attr("y1", -3)
-                .attr("x2", d => (d.position))
-                .attr("y2", legendHeight+3)
-                .style("stroke", "#A4A4A4")
-                .style("stroke-width", 1);
-
+            // Optionally, add text labels for each rect
             legend.selectAll("text")
-                .data(lengendValPos)
+                .data(colorRange)
                 .enter().append("text")
-                .attr("y", d => (d.position-5))
-                .attr("x", legendHeight + 20)
-                .text(d => (d.value))
-                .attr("transform",`translate(${legendWidth-10},0) rotate(90)`)
+                .attr("transform", `translate(${legendWidth / 12},0) rotate(90)`)
+                .attr("x", 25)
+                .attr("y", (d, i) => -((i-1) * (legendWidth / 6)+ 1.5*(legendWidth / 12) ))
+                .text(d => d)
                 .style("fill", "#767678")
                 .style('font-weight', 'bold');
 
@@ -1009,22 +1130,7 @@ function scrollVis(){
             //         .style("font-weight", "bold")
             //         .text("Columbine Event"))
             //     .call(g => g.select(".domain").remove())
-            // xAxis_2003 = x_axis
-            // .append("g")
-            // // .style("opacity",0)
-            // .attr("transform", `translate(0,${height - margin.bottom*4})`)
-            // .call(d3.axisBottom(x)
-            //         .tickValues([2003])
-            //         .tickFormat(x => x)
-            //         .tickSize(-RectsHeight-margin.bottom))
-            //         .style("color","red")
-            //     .call(g => g.select(".tick text")
-            //         .attr("dy","1.5em")
-            //         .clone()
-            //         .attr("dy", "3em")
-            //         .style("font-weight", "bold")
-            //         .text("Columbine Event"))
-            //     .call(g => g.select(".domain").remove())
+
         }
 
         if(heat_state_g){
@@ -1046,14 +1152,15 @@ function scrollVis(){
         activateFunctions[1] = showMap;
         activateFunctions[2] = showMapDots;
         activateFunctions[3] = showMapGradient;
-        activateFunctions[4] = showHeat;
+        activateFunctions[4] = showLaw;
         activateFunctions[5] = showHeatState;
-        activateFunctions[6] = showMapBigDot; // empty page
-        activateFunctions[7] = showPar;
-        activateFunctions[8] = showHeat;
-        activateFunctions[9] = showLine;
-        activateFunctions[10] = showPie;
-        activateFunctions[11] = showHeat;
+        activateFunctions[6] = showHeat;
+        activateFunctions[7] = showCompare; 
+        activateFunctions[8] = showMapBigDot;
+        activateFunctions[9] = showEvent;
+        activateFunctions[10] = showPar;
+        activateFunctions[11] = showPie;
+        activateFunctions[12] = showSomething;
 
         for (var i = 0; i < 12; i++) {
             updateFunctions[i] = function () {};
@@ -1064,18 +1171,27 @@ function scrollVis(){
      * ACTIVATE FUNCTIONS
      */
      function showTitle() {
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        g.selectAll(".coverimg").style("opacity", 0.2)
+        g.selectAll(".lawimg").style("opacity", 0)
         g.selectAll('.event-title')
         .transition()
         .duration(0)
         .attr('opacity', 1);
 
-
+        hideCompare();
         hideMap(map_g);
         hideMaptext(map_text_g);
         hideMapcount(map_count_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
         hidePar(parallel_g);
+        hideText()
     }
     /**
      * showMap - draw the map
@@ -1085,6 +1201,13 @@ function scrollVis(){
      *
      */    
     function showMap() {
+        g.selectAll(".lawimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        g.selectAll(".coverimg").style("opacity", 0)
+        g.selectAll(".lawimg").style("opacity", 0)
         g.selectAll('.event-title')
         .transition()
         .duration(0)
@@ -1111,16 +1234,27 @@ function scrollVis(){
             .duration(600)
             .attr('opacity', 1.0)
         }
+        hideCompare();
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g )
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
         hidePar(parallel_g);
+        hideText()
     }
     function showMapDots(){
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        d3.select("#circle_g_p").raise()
+        hideCompare();
         hideMapcount(map_count_g);
         hidePar(parallel_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideText()
         var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
@@ -1132,13 +1266,18 @@ function scrollVis(){
             .transition()
             .duration(3000)
             .attr('opacity', 1.0);
-            // circle_g
-            // .transition()
-            // .duration(1000)
-            // .attr('opacity', 1.0)
-            // .style("r", "3")
-            // .transition(8000)
-            // .style("r",d=>{console.log(size(d.casualties));return size(d.casualties)})
+
+            d3.selectAll("#circle")
+            .each(function(d) {
+                const circle = d3.select(this);
+                circle.append("title").attr("id", "tooltip_circle")
+                    .text(() => {
+                        
+                        return `School: ${d.school_name}, Year: ${d.year}, Killed: ${d.killed}, Injured: ${d.injured}`
+                        
+                    })
+            })
+            
             
         }
     }
@@ -1150,9 +1289,16 @@ function scrollVis(){
      *
      */
     function showMapGradient() {
+        g.selectAll(".lawimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        hideCompare();
         hideDots(circle_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hidePar(parallel_g);
+        hideText()
         if (map_g) {
             map_g
             .transition()
@@ -1178,11 +1324,52 @@ function scrollVis(){
             .attr('opacity', 1.0);
         }
     }
+    function showLaw(){
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
+        hideDots(circle_g);
+        hidePar(parallel_g);
+        hideText()
+        g.selectAll(".lawimg").style("opacity", 1.0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+    }
+    function showEvent(){
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        g.selectAll(".lawimg").style("opacity", 0.0)
+        g.selectAll(".laweventimg").style("opacity", 1.0)
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
+        hideDots(circle_g);
+        hidePar(parallel_g);
+        hideText()
+        
+    }
     function showMapBigDot(){
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        d3.select("#circle_g_p").raise()
+        hideCompare();
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hidePar(parallel_g);
         hideHeatState(heat_state_g,legend,heat_rects);
+        hideText()
         var size = d3.scaleLinear()
                  .domain([0,34])
                  .range([3,10]);
@@ -1197,31 +1384,33 @@ function scrollVis(){
             circle_g
             .transition()
             .duration(1000)
-            .attr('opacity', 0.5)
-            // .style("fill", "black")
+            .attr('opacity', 1.0)
             .style("r", "3")
             .transition(8000)
             .style("r",d=>{return size(d.casualties)})
             .style("fill", d=>{
-                if(d.casualties > 8 ){
+                if(d.casualties > 10 ){
                     return "#cb181d"
                 }
             })
             .style("opacity", d=>{
-                if(d.killed > 5 || d.injured > 5){
+                if(d.casualties > 10){
                     return 1
                 }
+                else{
+                    return 0
+                }
             })
+
         }
     }
-    /**
-     * showHeat - heatmap transition from gray to sequential
-     *
-     * hides: intro, map, map_gradient, states text, pie
-     * shows: heat map
-     *
-     */
-    function showHeat() {
+    function showSomething() {
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
         hideMap(map_g);
         hideMaptext(map_text_g);
         hideMapcount(map_count_g);
@@ -1229,14 +1418,62 @@ function scrollVis(){
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
         hidePar(parallel_g);
+        hideText()
+
+        d3.selectAll("#textrect")
+        .transition()
+        .duration(0)
+        .attr('opacity', 1);
+
+        d3.selectAll("#text")
+        .transition()
+        .duration(0)
+        .attr('opacity', 1);
+
+    }
+    function showCompare() {
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideHeatState(heat_state_g,legend,heat_rects);
+        hideDots(circle_g);
+        hidePar(parallel_g);
+        hideText()
+        g.selectAll('.compare-title')
+        .transition()
+        .duration(0)
+        .attr('opacity', 1);
+
+        d3.selectAll('#casualties')
+        .transition()
+        .duration(3000)
+        .style("font-size", "150px")
+        .style("fill", "#cb181d")
+
     }
     function showPar(){
+        
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        if(heat_rects){
+            d3.selectAll("#tooltip").remove();
+        }
+        d3.selectAll("#tooltip_circle").remove();
+        hideCompare();
         hideMap(map_g);
         hideMaptext(map_text_g);
         hideMapcount(map_count_g);
         hideHeatState(heat_state_g,legend,heat_rects);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideDots(circle_g);
+        hideText()
         if(parallel_g){
             parallel_g
             .transition()
@@ -1245,12 +1482,17 @@ function scrollVis(){
         }
     }
     function showHeatState() {
+        d3.selectAll("#tooltip_circle").remove();
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        hideCompare();
         hideMap(map_g);
         hideMaptext(map_text_g);
         hideMapcount(map_count_g);
         hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
         hideDots(circle_g);
         hidePar(parallel_g);
+        hideText()
         if (heat_state_g) {
 
             heat_state_g
@@ -1265,30 +1507,11 @@ function scrollVis(){
             .transition()
             .duration(2000)
             .attr('opacity', 1.0);
-                   
-
-            // const rowHeight = 25;
-            // const RectsHeight = rowHeight * heatmaps_state.highStates.length + margin.top + margin.bottom;
-
-            // Update y-axis scale domain
-            // y.domain(heatmaps_state.highStates)
-            // .range([height/7+20, height/7+RectsHeight+20 - margin.bottom])
-            // y_axis.transition()
-            // .duration(10000)
-            // .call(d3.axisLeft(y).tickSize(0))
-            // .call(g => g.select(".domain").remove())
-            // x_axis.transition()
-            // .duration(10000)
-            // .attr("transform", `translate(0,${height/7-height/20+10})`)
-
-            // heat_state_g.selectAll("#long_rects")
-            // .data(heatmaps_state.twoDArray)
-            // .transition()
-            // .duration(10000)
-            // .attr("transform", (d, i) => `translate(0,${y(heatmaps_state.updatedStates[i])? y(heatmaps_state.updatedStates[i]): -100})`)
-
-            heat_state_g.selectAll("#small_rects")
-            // .attr("height", y.bandwidth()-1)
+            x_axis.selectAll(".tick text")
+            .attr("fill","black")
+            .attr("font-weight","normal")
+            .attr("font-size","10px")
+            heat_state_g.selectAll("#small_rects").style("stroke", "none")
             .each(function(d) {
                 const rect = d3.select(this);
                 rect.append("title").attr("id", "tooltip")
@@ -1299,9 +1522,95 @@ function scrollVis(){
                             return 'No events available';
                         }
                     })
+
+            });
+            
+            x_axis.selectAll(".tick text")
+            .style("fill", d=>{
+                if(d.toString() == "1999" ||
+                   d.toString() == "2008" ||
+                   d.toString() == "2015" ||
+                   d.toString() == "2017" ||
+                   d.toString() == "2018" ||
+                   d.toString() == "2019" ||
+                   d.toString() == "2022" 
+                   ){
+                    return "#cb181d"
+                }
+                else{
+                    return "black"
+                }
+                
+            })
+            .style('font-weight', d=>{
+                if(d.toString() == "1999" ||
+                   d.toString() == "2008" ||
+                   d.toString() == "2015" ||
+                   d.toString() == "2017" ||
+                   d.toString() == "2018" ||
+                   d.toString() == "2019" ||
+                   d.toString() == "2022" 
+                   ){
+                    return "bold"
+                }
+                else{
+                    return "normal"
+                }
+                
+            })
+            .style('font-size', d=>{
+                if(d.toString() == "1999" ||
+                   d.toString() == "2008" ||
+                   d.toString() == "2015" ||
+                   d.toString() == "2017" ||
+                   d.toString() == "2018" ||
+                   d.toString() == "2019" ||
+                   d.toString() == "2022" 
+                   ){
+                    return "0.7rem"
+                }
+
+                
+            })
+        } 
+        
+    }
+
+    function showHeat() {
+        d3.selectAll("#tooltip_circle").remove();
+        g.selectAll(".lawimg").style("opacity", 0)
+        g.selectAll(".laweventimg").style("opacity", 0)
+        hideCompare();
+        hideMap(map_g);
+        hideMaptext(map_text_g);
+        hideMapcount(map_count_g);
+        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
+        hideDots(circle_g);
+        hidePar(parallel_g);
+        hideText()
+        if (heat_state_g) {
+
+            heat_state_g
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1.0);
+            heat_rects
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1.0)
+            legend
+            .transition()
+            .duration(2000)
+            .attr('opacity', 1.0);
+
+
+            heat_state_g.selectAll("#small_rects")
+            .each(function(d) {
+                const rect = d3.select(this);
+
                 if (d.events) {
                     d.events.map((v) => {
-                        if (parseInt(v.injured) + parseInt(v.killed) > 8) {
+                        if (parseInt(v.injured) + parseInt(v.killed) > 10) {
                             rect.style("stroke", "none") // Initially hide the stroke
                             .style("stroke-width", 0) // Set stroke width to 0
                             .style("shape-rendering", "crispEdges"); // Ensures sharp edges for rectangles
@@ -1309,28 +1618,13 @@ function scrollVis(){
                             // Add a transition to gradually show the stroke
                             rect.transition()
                                 .delay(1000) // Delay the transition
-                                .duration(2000) // Transition duration
-                                .style("stroke", "yellow") // Outline color
+                                .duration(1000) // Transition duration
+                                .style("stroke", "#cb181d") // Outline color #fb6a4a
                                 .style("stroke-width", 2); // Outline width
                        }
                     })
                 }
             });
-
-            //  heat_state_g.selectAll("#small_rects")
-            //     .each(function(d) {
-            //         const rect = d3.select(this);
-            //         if (d.events) {
-            //             d.events.map((v) => {
-            //                 if (parseInt(v.injured) + parseInt(v.killed) > 8) {
-            //                     console.log('xxxx', parseInt(v.injured) + parseInt(v.killed))
-            //                     rect.style("stroke", "yellow") // Outline color
-            //                         .style("stroke-width", 2) // Outline width
-            //                         .style("shape-rendering", "crispEdges"); // Ensures sharp edges for rectangles
-            //                     }
-            //             })
-            //         }
-            //     });
             
 
         } 
@@ -1341,116 +1635,40 @@ function scrollVis(){
 
     function showPie() {
       
-        // hideMap();
-        // hideMaptext();
-        // hideHeat();
+        hideCompare();
         hideHeatState(heat_state_g,legend,heat_rects);
         hideDots(circle_g);
         hidePar(parallel_g);
-
+        hideText()
 
         if(heat_rects){
             d3.selectAll("#tooltip").remove();
         }
+        d3.selectAll("#tooltip_circle").remove();
 
         
         // ensure the axis to histogram one
         if (deceased_pie_g) {
             deceased_pie_g
             .transition()
-            .duration(600)
+            .duration(1200)
             .attr('opacity', 1.0);
         }
         if (shooting_pie_g) {
             shooting_pie_g
             .transition()
-            .duration(1200)
+            .duration(1800)
             .attr('opacity', 1.0);
         }
         if (weapon_pie_g) {
             weapon_pie_g
             .transition()
-            .duration(1800)
+            .duration(600)
             .attr('opacity', 1.0);
         }
 
     }
 
-    function showLine() {
-        
-        // hideMap();
-        // hideMaptext();
-        hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
-        hideHeatState(heat_state_g,legend,heat_rects);
-        hideDots(circle_g);
-        hidePar(parallel_g);
-
-        if(heat_rects){
-            d3.selectAll("#tooltip").remove();
-        }
-
-
-    /**
-     * showCough
-     *
-     * hides: nothing
-     * (previous and next sections are histograms
-     *  so we don't have to hide much here)
-     * shows: histogram
-     *
-     */
-    // function showCough() {
-    //     // ensure the axis to histogram one
-    //     // hideAxis();
-    //     hidePie();
-    //     hideHeat();
-    //     hideLine();
-
-    //     g.selectAll('.hist')
-    //     .transition()
-    //     .duration(600)
-    //     .attr('y', function (d) { return yHistScale(d.length); })
-    //     .attr('height', function (d) { return height - yHistScale(d.length); })
-    //     .style('opacity', 1.0);
-
-    }
-
-
-    /**
-     * UPDATE FUNCTIONS
-     *
-     * These will be called within a section
-     * as the user scrolls through it.
-     *
-     * We use an immediate transition to
-     * update visual elements based on
-     * how far the user has scrolled
-     *
-     */
-
-    /**
-     * updateCough - increase/decrease
-     * cough text and color
-     *
-     * @param progress - 0.0 - 1.0 -
-     *  how far user has scrolled in section
-     */
-    // function updateCough(progress) {
-    //     hidePie(deceased_pie_g,shooting_pie_g,weapon_pie_g);
-        
-    //     hideHeat();
-    //     g.selectAll('.cough')
-    //     .transition()
-    //     .duration(0)
-    //     .attr('opacity', progress);
-
-    //     g.selectAll('.hist')
-    //     .transition('cough')
-    //     .duration(0)
-    //     .style('fill', function (d) {
-    //         return (d.x0 >= 14) ? coughColorScale(progress) : '#008080';
-    //     });
-    // }
 
 
    
@@ -1522,7 +1740,6 @@ function display(data) {
 
 </script>
 <style scoped>
-
 #graphic {
   width: 100%;
 }
@@ -1543,7 +1760,7 @@ function display(data) {
 .step {
   margin-bottom: 300px;
   font-family: "TiemposTextWeb-Regular","Georgia";
-  font-size: 16px;
+  font-size: 14px;
   line-height: 23px;
   color: #767678;
   text-align: justify;
@@ -1551,9 +1768,6 @@ function display(data) {
 }
 .boarder{
   border-style: groove;
-}
-#small_rects .hover{
-    border: #262626 solid 1px;
 }
 #sections .title {
   font-family: Arial,Helvetica,"san-serif";
